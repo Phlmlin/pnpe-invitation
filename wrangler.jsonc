@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pnpe-invitation",
+  "compatibility_date": "2024-09-23",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://ovljxjkteqffjmwkiwln.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_oN6LgNmcr8mNBjlaD_wdyQ_tu6EFYjb"
+  }
+}
