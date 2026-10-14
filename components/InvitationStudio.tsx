@@ -14,7 +14,6 @@ import {
   AlertCircle,
   Eye,
   Layers,
-  Sparkles,
   Link as LinkIcon
 } from 'lucide-react';
 import { store } from '@/lib/store';

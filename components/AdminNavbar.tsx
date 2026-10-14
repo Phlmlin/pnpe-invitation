@@ -10,8 +10,7 @@ import {
   Mail,
   LogOut,
   ExternalLink,
-  ShieldCheck,
-  Sparkles
+  ShieldCheck
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 

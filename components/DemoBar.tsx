@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Eye, ShieldCheck, RotateCcw, Sparkles } from 'lucide-react';
+import { Eye, ShieldCheck, RotateCcw } from 'lucide-react';
 import { store } from '@/lib/store';
 
 export default function DemoBar() {

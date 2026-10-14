@@ -14,7 +14,7 @@ import {
   Building2,
   ShieldCheck,
   Layers,
-  Sparkles,
+  Briefcase,
   Link as LinkIcon,
   MessageCircle,
   TrendingUp,
@@ -84,7 +84,7 @@ export default function AdminDashboardPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-xs font-bold mb-1">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <Layers className="w-3.5 h-3.5 text-indigo-600" />
               <span>Vue d'ensemble en temps réel</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -157,7 +157,7 @@ export default function AdminDashboardPage() {
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-xs">
-              <Sparkles className="w-6 h-6" />
+              <Briefcase className="w-6 h-6" />
             </div>
           </div>
 

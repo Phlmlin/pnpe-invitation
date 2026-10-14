@@ -21,7 +21,7 @@ import {
   Mail,
   Loader2,
   ArrowLeft,
-  Sparkles
+  Activity
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { store } from '@/lib/store';
@@ -181,7 +181,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="w-3 h-3 text-amber-500" />
+                <Activity className="w-3 h-3 text-indigo-600" />
                 <span>Suivi Live • /{invitation.slug}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1.5">

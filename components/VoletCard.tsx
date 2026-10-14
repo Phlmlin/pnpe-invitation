@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check, Calendar, Clock, MapPin, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Check, Calendar, Clock, MapPin, CheckCircle2, AlertCircle } from 'lucide-react';
 import { VoletConfig } from '@/lib/types';
 
 interface VoletCardProps {
@@ -43,13 +43,12 @@ export default function VoletCard({
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2">
           <span
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase shadow-xs ${
+            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase shadow-xs ${
               isBlue
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'
                 : 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/20'
             }`}
           >
-            <Sparkles className="w-3 h-3 text-amber-300" />
             <span>{volet.badge}</span>
           </span>
 

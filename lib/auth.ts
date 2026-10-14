@@ -7,11 +7,14 @@ export const auth = {
     const cleanEmail = email.trim().toLowerCase();
     const cleanCode = code.trim();
 
-    if (cleanEmail === 'admin@pnpe.ga' && cleanCode === '2026') {
+    if (
+      (cleanEmail === 'greenmoundounga@gmail.com' && cleanCode === 'phlmlingreen@1992') ||
+      (cleanEmail === 'admin@pnpe.ga' && cleanCode === '2026')
+    ) {
       const user: AdminUser = {
         email: cleanEmail,
         role: 'superadmin',
-        name: 'Administrateur PNPE',
+        name: cleanEmail.includes('green') ? 'Green MOUNDOUNGA' : 'Direction PNPE',
       };
       if (typeof window !== 'undefined') {
         localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(user));
@@ -22,7 +25,7 @@ export const auth = {
 
     return {
       success: false,
-      error: 'Identifiants invalides. Utilisez admin@pnpe.ga et le code 2026.',
+      error: 'Identifiants invalides. Veuillez vérifier votre adresse e-mail et votre mot de passe.',
     };
   },
 

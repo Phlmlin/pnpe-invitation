@@ -14,7 +14,7 @@ import {
   ArrowRight,
   ShieldAlert,
   Loader2,
-  Sparkles,
+  Calendar,
   Share2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -219,7 +219,7 @@ export default function InvitePage({ params }: InvitePageProps) {
               {/* Contexte & Description */}
               <div className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-modern space-y-3">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-[11px] font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3 h-3 text-amber-500" />
+                  <Calendar className="w-3 h-3 text-indigo-600" />
                   Invitation Officielle
                 </div>
 

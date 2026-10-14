@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Printer, Calendar, Building, User, Phone, Mail, MapPin, ArrowRight, Sparkles, QrCode } from 'lucide-react';
+import { CheckCircle2, Printer, Calendar, Building, User, Phone, Mail, MapPin, ArrowRight, QrCode } from 'lucide-react';
 import { RSVPRegistration, Invitation } from '@/lib/types';
 
 interface ConfirmationPassProps {
@@ -117,7 +117,7 @@ export default function ConfirmationPass({
         {/* Détail des volets retenus */}
         <div>
           <h3 className="text-xs font-bold tracking-wider text-slate-500 uppercase mb-3 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+            <Calendar className="w-3.5 h-3.5 text-indigo-600" />
             <span>SÉQUENCES RETENUES ({selectedVolets.length})</span>
           </h3>
 
