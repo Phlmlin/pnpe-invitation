@@ -139,7 +139,10 @@ export default function GlobalAdminEmailPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout
+      currentInvitationSlug={selectedInvitation?.slug}
+      currentInvitationId={selectedInvitation?.id}
+    >
       <div className="space-y-6">
         <div>
           <Link

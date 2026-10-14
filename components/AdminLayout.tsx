@@ -15,6 +15,7 @@ import {
   X
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
+import { store } from '@/lib/store';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -24,14 +25,15 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({
   children,
-  currentInvitationSlug = 'ogooue-maritime-2026',
-  currentInvitationId = 'inv-og-2026',
+  currentInvitationSlug,
+  currentInvitationId,
 }: AdminLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [activeSlug, setActiveSlug] = useState<string | null>(currentInvitationSlug || null);
 
   useEffect(() => {
     if (!auth.isAuthenticated()) {
@@ -43,7 +45,23 @@ export default function AdminLayout({
       setUser(session);
     }
     setIsCheckingAuth(false);
-  }, [router]);
+
+    async function loadActiveSlug() {
+      if (currentInvitationSlug) {
+        setActiveSlug(currentInvitationSlug);
+        return;
+      }
+      const list = await store.getInvitations();
+      if (list.length > 0) {
+        setActiveSlug(list[0].slug);
+      } else {
+        setActiveSlug(null);
+      }
+    }
+
+    loadActiveSlug();
+    return store.subscribe(loadActiveSlug);
+  }, [router, currentInvitationSlug]);
 
   const handleLogout = () => {
     auth.logout();
@@ -163,28 +181,30 @@ export default function AdminLayout({
           </div>
 
           {/* Raccourci vers le lien public de test */}
-          <div className="px-5 pt-3">
-            <div className="p-3 rounded-2xl bg-slate-800/50 border border-slate-700/60 text-xs">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
-                  Lien Public Actif
-                </span>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+          {activeSlug && (
+            <div className="px-5 pt-3">
+              <div className="p-3 rounded-2xl bg-slate-800/50 border border-slate-700/60 text-xs">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] uppercase font-mono font-bold text-slate-400">
+                    Lien Public Actif
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                </div>
+                <p className="text-white font-medium text-[11px] truncate mb-2" title={`/invite/${activeSlug}`}>
+                  /invite/{activeSlug}
+                </p>
+                <a
+                  href={`/invite/${activeSlug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-slate-700/80 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition-colors"
+                >
+                  <span>Tester page invité</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
-              <p className="text-white font-medium text-[11px] truncate mb-2">
-                /invite/{currentInvitationSlug}
-              </p>
-              <a
-                href={`/invite/${currentInvitationSlug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-slate-700/80 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition-colors"
-              >
-                <span>Tester page invité</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Pied de sidebar : Profil Admin & Déconnexion */}

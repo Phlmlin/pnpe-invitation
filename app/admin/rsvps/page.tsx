@@ -193,7 +193,10 @@ export default function GlobalRSVPsPage() {
   }
 
   return (
-    <AdminLayout>
+    <AdminLayout
+      currentInvitationSlug={selectedInvitation?.slug}
+      currentInvitationId={selectedInvitation?.id}
+    >
       <div className="space-y-6">
         {/* Fil d'Ariane & Titre */}
         <div>
