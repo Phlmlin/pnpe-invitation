@@ -17,11 +17,14 @@ export async function GET(request: NextRequest, context: RouteContext) {
     }
 
     const invitation = await store.getInvitationBySlug(slug);
+    const targetImage =
+      invitation?.imageUrl ||
+      invitation?.volets?.find((v) => Boolean(v.imageUrl))?.imageUrl;
 
-    if (invitation?.imageUrl) {
+    if (targetImage) {
       // Cas 1 : Image encodée en data URL Base64 (upload direct depuis le formulaire admin)
-      if (invitation.imageUrl.startsWith('data:image/')) {
-        const matches = invitation.imageUrl.match(/^data:([^;]+);base64,(.+)$/);
+      if (targetImage.startsWith('data:image/')) {
+        const matches = targetImage.match(/^data:([^;]+);base64,(.+)$/);
         if (matches && matches.length === 3) {
           const mimeType = matches[1];
           const base64Data = matches[2];
@@ -47,10 +50,10 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
       // Cas 2 : Image hébergée sur une URL HTTP / HTTPS externe
       if (
-        invitation.imageUrl.startsWith('http://') ||
-        invitation.imageUrl.startsWith('https://')
+        targetImage.startsWith('http://') ||
+        targetImage.startsWith('https://')
       ) {
-        return NextResponse.redirect(invitation.imageUrl, 302);
+        return NextResponse.redirect(targetImage, 302);
       }
     }
 

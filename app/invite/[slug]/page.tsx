@@ -3,31 +3,25 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import {
-  Maximize2,
-  CheckCircle2,
-  AlertCircle,
   Building,
   User,
   Briefcase,
   Phone,
   Mail,
-  Users,
   ArrowRight,
   ShieldAlert,
   Loader2,
   Calendar,
-  Share2,
+  AlertCircle,
   HelpCircle,
   PlusCircle,
-  Info,
-  Sparkles
+  FileText
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { store } from '@/lib/store';
 import { Invitation, RSVPRegistration } from '@/lib/types';
 import OfficialHeader from '@/components/OfficialHeader';
 import VoletCard from '@/components/VoletCard';
-import ImageModal from '@/components/ImageModal';
 import ConfirmationPass from '@/components/ConfirmationPass';
 
 interface InvitePageProps {
@@ -36,25 +30,37 @@ interface InvitePageProps {
   }>;
 }
 
+type ParticipantProfile = 'company' | 'jobseeker';
+
 export default function InvitePage({ params }: InvitePageProps) {
   const resolvedParams = use(params);
   const slug = resolvedParams.slug;
 
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedVolets, setSelectedVolets] = useState<string[]>(['volet-1', 'volet-2']); // Par défaut les 2 sont présélectionnés
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [selectedVolets, setSelectedVolets] = useState<string[]>([]);
   const [confirmedRSVP, setConfirmedRSVP] = useState<RSVPRegistration | null>(null);
   const [isSingleVoletModalOpen, setIsSingleVoletModalOpen] = useState(false);
 
-  // Formulaire
+  // Profil participant : Entreprise ou Demandeur d'emploi
+  const [participantType, setParticipantType] = useState<ParticipantProfile>('company');
+
+  // Champs Entreprise
   const [company, setCompany] = useState('');
   const [participantName, setParticipantName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
   const [attendeesCount, setAttendeesCount] = useState<number>(1);
   const [comments, setComments] = useState('');
+
+  // Champs Demandeur d'emploi
+  const [nom, setNom] = useState('');
+  const [prenom, setPrenom] = useState('');
+  const [pnpeNumber, setPnpeNumber] = useState('');
+  const [profil, setProfil] = useState('');
+
+  // Champs Communs
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -65,6 +71,10 @@ export default function InvitePage({ params }: InvitePageProps) {
       const data = await store.getInvitationBySlug(slug);
       if (data) {
         setInvitation(data);
+        // Par défaut, présélectionner toutes les activités de l'invitation
+        if (data.volets && data.volets.length > 0) {
+          setSelectedVolets(data.volets.map((v) => v.id));
+        }
       }
       setLoading(false);
     }
@@ -111,7 +121,7 @@ export default function InvitePage({ params }: InvitePageProps) {
     });
   };
 
-  // Exécution finale de l'enregistrement avec les volets confirmés
+  // Exécution finale de l'enregistrement avec les activités confirmées
   const executeRegistration = async (voletsToSave: string[]) => {
     if (!invitation) return;
     setIsSubmitting(true);
@@ -121,18 +131,42 @@ export default function InvitePage({ params }: InvitePageProps) {
       const randomCode = Math.floor(1000 + Math.random() * 9000);
       const code = `PNPE-OG-${randomCode}`;
 
+      let finalParticipantName = '';
+      let finalCompany = '';
+      let finalJobTitle = '';
+      let finalAttendees = 1;
+      let finalComments: string | undefined = undefined;
+
+      if (participantType === 'jobseeker') {
+        finalParticipantName = `${nom.trim().toUpperCase()} ${prenom.trim()}`;
+        finalCompany = pnpeNumber.trim()
+          ? `Demandeur d'emploi (N° PNPE: ${pnpeNumber.trim()})`
+          : "Demandeur d'emploi";
+        finalJobTitle = profil.trim();
+        finalAttendees = 1;
+        finalComments = pnpeNumber.trim()
+          ? `Numéro PNPE : ${pnpeNumber.trim()}`
+          : undefined;
+      } else {
+        finalParticipantName = participantName.trim();
+        finalCompany = company.trim();
+        finalJobTitle = jobTitle.trim() || 'Représentant';
+        finalAttendees = Number(attendeesCount) || 1;
+        finalComments = comments.trim() || undefined;
+      }
+
       const newRSVP: RSVPRegistration = {
         id: `rsvp-${Date.now()}`,
         invitationId: invitation.id,
         confirmationCode: code,
-        company: company.trim(),
-        participantName: participantName.trim(),
-        jobTitle: jobTitle.trim() || 'Représentant',
+        company: finalCompany,
+        participantName: finalParticipantName,
+        jobTitle: finalJobTitle,
         phone: phone.trim(),
         email: email.trim().toLowerCase(),
         volets: voletsToSave,
-        attendeesCount: Number(attendeesCount) || 1,
-        comments: comments.trim() || undefined,
+        attendeesCount: finalAttendees,
+        comments: finalComments,
         createdAt: new Date().toISOString(),
       };
 
@@ -140,10 +174,10 @@ export default function InvitePage({ params }: InvitePageProps) {
 
       try {
         confetti({
-          particleCount: 50,
-          spread: 70,
+          particleCount: 60,
+          spread: 80,
           origin: { y: 0.6 },
-          colors: ['#4F46E5', '#10B981', '#FCD116', '#3B82F6']
+          colors: ['#009E60', '#FCD116', '#3A75C4', '#4F46E5']
         });
       } catch {
         // ignorer
@@ -164,43 +198,51 @@ export default function InvitePage({ params }: InvitePageProps) {
     e.preventDefault();
     setErrorMessage(null);
 
+    // Validation obligatoire : au moins une activité cochée
     if (selectedVolets.length === 0) {
-      setErrorMessage('Veuillez sélectionner au moins un volet de présence ci-dessus.');
+      setErrorMessage('Veuillez sélectionner au moins une activité pour valider votre inscription.');
       return;
     }
 
-    if (!company.trim() || !participantName.trim() || !phone.trim() || !email.trim()) {
-      setErrorMessage('Veuillez remplir tous les champs obligatoires (*).');
-      return;
+    if (participantType === 'jobseeker') {
+      if (!nom.trim() || !prenom.trim() || !profil.trim() || !phone.trim() || !email.trim()) {
+        setErrorMessage('Veuillez remplir tous les champs obligatoires du demandeur d’emploi (*).');
+        return;
+      }
+    } else {
+      if (!company.trim() || !participantName.trim() || !jobTitle.trim() || !phone.trim() || !email.trim()) {
+        setErrorMessage('Veuillez remplir tous les champs obligatoires de l’entreprise (*).');
+        return;
+      }
     }
 
-    // Si le participant a sélectionné un seul volet alors que plusieurs volets sont prévus :
+    // Si le participant a sélectionné 1 seule activité alors que l'invitation en compte plusieurs :
     if (selectedVolets.length === 1 && invitation && invitation.volets.length > 1) {
       setIsSingleVoletModalOpen(true);
       return;
     }
 
-    // Si les deux volets sont déjà sélectionnés : validation directe sans interruption
+    // Validation directe
     await executeRegistration(selectedVolets);
   };
 
-  const singleVolet = invitation && selectedVolets.length === 1
-    ? invitation.volets.find((v) => v.id === selectedVolets[0])
-    : null;
+  const singleVolet =
+    invitation && selectedVolets.length === 1
+      ? invitation.volets.find((v) => v.id === selectedVolets[0])
+      : null;
 
-  const missingVolet = invitation && selectedVolets.length === 1
-    ? invitation.volets.find((v) => v.id !== selectedVolets[0])
-    : null;
+  const missingVolet =
+    invitation && selectedVolets.length === 1
+      ? invitation.volets.find((v) => v.id !== selectedVolets[0])
+      : null;
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 relative">
-      <OfficialHeader
-        organization={invitation.organization}
-      />
+      <OfficialHeader organization={invitation.organization} />
 
       {confirmedRSVP ? (
         // ÉCRAN DE CONFIRMATION OFFICIEL
-        <div className="max-w-3xl mx-auto px-4 py-10 w-full animate-in fade-in duration-200">
+        <div className="max-w-3xl mx-auto px-4 py-8 sm:py-12 w-full animate-in fade-in duration-200">
           <ConfirmationPass
             rsvp={confirmedRSVP}
             invitation={invitation}
@@ -208,6 +250,11 @@ export default function InvitePage({ params }: InvitePageProps) {
               setConfirmedRSVP(null);
               setCompany('');
               setParticipantName('');
+              setJobTitle('');
+              setNom('');
+              setPrenom('');
+              setPnpeNumber('');
+              setProfil('');
               setPhone('');
               setEmail('');
               setComments('');
@@ -215,148 +262,239 @@ export default function InvitePage({ params }: InvitePageProps) {
           />
         </div>
       ) : (
-        // MISE EN PAGE INVITÉ MODERNE
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full flex-1">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* COLONNE GAUCHE : Affiche Officielle dans un cadre moderne */}
-            <div className="lg:col-span-5 space-y-6">
-              {invitation.imageUrl && (
-                <div className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-3xl p-3 shadow-modern relative group">
-                  <div className="relative overflow-hidden rounded-2xl bg-slate-900">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={invitation.imageUrl}
-                      alt={invitation.title}
-                      className="w-full h-auto object-cover cursor-pointer transition-transform duration-300 group-hover:scale-[1.02]"
-                      onClick={() => setIsImageModalOpen(true)}
-                    />
-                    
-                    <button
-                      type="button"
-                      onClick={() => setIsImageModalOpen(true)}
-                      className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/85 hover:bg-slate-900 text-white text-xs font-semibold backdrop-blur-md transition-all shadow-md"
-                    >
-                      <Maximize2 className="w-3.5 h-3.5" />
-                      <span>Agrandir l'affiche</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Contexte & Description */}
-              <div className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-modern space-y-3">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-indigo-700 text-[11px] font-bold uppercase tracking-wider">
-                  <Calendar className="w-3 h-3 text-indigo-600" />
-                  Invitation Officielle
-                </div>
-
-                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight leading-snug">
-                  {invitation.title}
-                </h1>
-
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  {invitation.introMessage}
-                </p>
-
-                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-mono">
-                  <span>Réf : {invitation.slug}</span>
-                  <span className="text-emerald-700 font-bold">● Inscriptions ouvertes</span>
-                </div>
-              </div>
+        // PAGE D'INVITATION & D'INSCRIPTION PRINCIPALE
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-8 flex-1">
+          {/* 1. EN-TÊTE DYNAMIQUE */}
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-modern text-left space-y-3 relative overflow-hidden">
+            {/* Liseré supérieur Gabon */}
+            <div className="absolute top-0 left-0 right-0 h-2 flex">
+              <div className="w-1/3 h-full bg-[#009E60]" />
+              <div className="w-1/3 h-full bg-[#FCD116]" />
+              <div className="w-1/3 h-full bg-[#3A75C4]" />
             </div>
 
-            {/* COLONNE DROITE : Sélection des Volets + Formulaire RSVP */}
-            <div className="lg:col-span-7 space-y-8">
-              
-              {/* ÉTAPE 1 : CHOIX DES VOLETS */}
-              <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 shadow-modern space-y-4">
-                <div className="mb-2">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider mb-2">
-                    <Calendar className="w-3.5 h-3.5 text-blue-700" />
-                    <span>Étape 1 sur 2 : Sélection des Volets</span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                    Sélectionnez vos séquences de présence
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium leading-relaxed">
-                    Vous pouvez vous inscrire au <strong className="text-blue-700 font-bold">Volet 1</strong>, au <strong className="text-emerald-700 font-bold">Volet 2</strong> ou <strong className="text-indigo-950 font-black underline underline-offset-4">aux deux volets</strong>.
-                  </p>
-                </div>
+            {/* Badge / Sur-titre : INVITATION */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-black uppercase tracking-widest">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              <span>INVITATION</span>
+            </div>
 
-                {/* Rappel bien visible pour le participant */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50/70 border border-amber-200/90 text-amber-950 text-xs flex items-start gap-3 shadow-xs">
-                  <Info className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-0.5">
-                    <p className="font-extrabold uppercase tracking-wide text-amber-900">
-                      Rappel de sélection
-                    </p>
-                    <p className="text-amber-800 leading-relaxed font-medium">
-                      Veillez à cocher tous les volets auxquels vous ou votre délégation participerez. Si vous cochez un seul volet, une confirmation vous sera demandée avant la validation définitive.
-                    </p>
-                  </div>
-                </div>
+            {/* Titre Principal de l'Invitation */}
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+              {invitation.title}
+            </h1>
 
-                {/* Blocs Volets Tactiles */}
-                <div className="space-y-4 pt-1">
-                  {invitation.volets.map((volet) => (
-                    <VoletCard
-                      key={volet.id}
-                      volet={volet}
-                      isSelected={selectedVolets.includes(volet.id)}
-                      onToggle={handleToggleVolet}
-                    />
-                  ))}
-                </div>
+            {/* Message d'introduction si renseigné */}
+            {invitation.introMessage && (
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
+                {invitation.introMessage}
+              </p>
+            )}
 
-                {/* Indicateur de sélection interactif */}
-                <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold">
-                  {selectedVolets.length === 2 ? (
-                    <div className="text-emerald-900 flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                      <span>Vous participez aux <strong>DEUX VOLETS</strong> (Programme complet)</span>
-                    </div>
-                  ) : selectedVolets.length === 1 ? (
-                    <div className="text-indigo-900 flex items-center gap-2">
-                      <Info className="w-5 h-5 text-indigo-600 flex-shrink-0" />
-                      <span>
-                        Vous participez à <strong>1 SEUL VOLET</strong> ({singleVolet?.badge || 'Volet sélectionné'}). Pensez à cocher aussi le 2ème volet si vous participez aux deux.
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="text-amber-900 flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                      <span>Veuillez cliquer sur au moins un volet ci-dessus.</span>
-                    </div>
-                  )}
-                  <span className="text-slate-500 font-mono text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 self-start sm:self-auto font-bold">
-                    {selectedVolets.length}/{invitation.volets.length} volet(s) coché(s)
-                  </span>
-                </div>
+            {/* Sous-titre / Statut : Réf : [Lien Public] ● Inscriptions ouvertes */}
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-mono">
+              <span className="font-bold text-slate-700">Réf : {invitation.slug}</span>
+              <span className="text-emerald-700 font-bold">● Inscriptions ouvertes</span>
+            </div>
+          </div>
+
+          {/* 2. SÉLECTION DES ACTIVITÉS */}
+          <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 shadow-modern space-y-5">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider mb-2">
+                <span>Étape 1 sur 2</span>
               </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Veuillez sélectionner l’activité qui vous intéresse
+              </h2>
+            </div>
 
-              {/* ÉTAPE 2 : FORMULAIRE D'ENREGISTREMENT RSVP */}
-              <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-modern">
-                <div className="mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-2">
-                    <span>Étape 2 sur 2</span>
-                  </div>
-                  <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                    Enregistrement de votre Entreprise
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    Renseignez vos coordonnées pour valider votre pass de présence.
-                  </p>
-                </div>
+            {/* Liste des Activités avec image dédiée à côté */}
+            <div className="space-y-4 pt-1">
+              {invitation.volets.map((volet) => (
+                <VoletCard
+                  key={volet.id}
+                  volet={volet}
+                  isSelected={selectedVolets.includes(volet.id)}
+                  onToggle={handleToggleVolet}
+                />
+              ))}
+            </div>
 
-                {errorMessage && (
-                  <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
-                    <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-                    <span>{errorMessage}</span>
-                  </div>
+            {/* Indicateur de sélection */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-600">
+                {selectedVolets.length === 0 ? (
+                  <strong className="text-rose-600">Aucune activité sélectionnée</strong>
+                ) : (
+                  <span>
+                    <strong className="text-indigo-900">{selectedVolets.length}</strong> sur {invitation.volets.length} activité(s) sélectionnée(s)
+                  </span>
                 )}
+              </span>
+              <span className="text-slate-500 font-mono font-bold">
+                {selectedVolets.length}/{invitation.volets.length}
+              </span>
+            </div>
+          </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+          {/* 3. FORMULAIRE D'INSCRIPTION DES PARTICIPANTS */}
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-modern space-y-6">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-2">
+                <span>Étape 2 sur 2</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Formulaire d&apos;inscription des Participants
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Choisissez votre profil et renseignez vos informations pour éditer votre pass d&apos;accès officiel.
+              </p>
+            </div>
+
+            {/* SÉLECTEUR DE PROFIL : Entreprise vs Demandeur d'emploi */}
+            <div className="p-1.5 bg-slate-100 rounded-2xl border border-slate-200/80 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setParticipantType('company')}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  participantType === 'company'
+                    ? 'bg-white text-indigo-700 shadow-sm border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Building className="w-4 h-4" />
+                <span>Entreprise</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setParticipantType('jobseeker')}
+                className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  participantType === 'jobseeker'
+                    ? 'bg-white text-emerald-700 shadow-sm border border-slate-200/60'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <User className="w-4 h-4" />
+                <span>Demandeur d'emploi</span>
+              </button>
+            </div>
+
+            {errorMessage && (
+              <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                <span className="font-semibold">{errorMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* CAS 1 : FORMULAIRE DEMANDEUR D'EMPLOI */}
+              {participantType === 'jobseeker' ? (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Nom (Obligatoire) */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Nom *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={nom}
+                        onChange={(e) => setNom(e.target.value)}
+                        placeholder="Ex: OBAME"
+                        className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                      />
+                    </div>
+
+                    {/* Prénom (Obligatoire) */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Prénom *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={prenom}
+                        onChange={(e) => setPrenom(e.target.value)}
+                        placeholder="Ex: Jean-Marc"
+                        className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Numéro PNPE (Facultatif) */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Numéro PNPE <span className="text-slate-400 font-normal">(Facultatif)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={pnpeNumber}
+                        onChange={(e) => setPnpeNumber(e.target.value)}
+                        placeholder="Ex: PNPE-12345"
+                        className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans font-mono"
+                      />
+                    </div>
+
+                    {/* Profil (Obligatoire) */}
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Profil *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={profil}
+                        onChange={(e) => setProfil(e.target.value)}
+                        placeholder="Ex: Comptable, Développeur Web, Électricien..."
+                        className="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Coordonnées Demandeur d'emploi */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Téléphone / WhatsApp *
+                      </label>
+                      <div className="relative">
+                        <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="tel"
+                          required
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="+241 77 00 00 00"
+                          className="w-full pl-10 pr-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                        Adresse E-mail *
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="votre.email@exemple.ga"
+                          className="w-full pl-10 pr-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* CAS 2 : FORMULAIRE ENTREPRISE */
+                <>
                   {/* Entreprise */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
@@ -379,7 +517,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Nom &amp; Prénom du Participant *
+                        Nom &amp; Prénom du Représentant *
                       </label>
                       <div className="relative">
                         <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -396,12 +534,13 @@ export default function InvitePage({ params }: InvitePageProps) {
 
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Fonction / Poste
+                        Fonction / Poste *
                       </label>
                       <div className="relative">
                         <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
                           type="text"
+                          required
                           value={jobTitle}
                           onChange={(e) => setJobTitle(e.target.value)}
                           placeholder="Ex: Directeur Général, DRH..."
@@ -480,58 +619,42 @@ export default function InvitePage({ params }: InvitePageProps) {
                       rows={2}
                       value={comments}
                       onChange={(e) => setComments(e.target.value)}
-                      placeholder="Ex: Nous souhaitons réserver un stand pour le Mini-salon du samedi..."
+                      placeholder="Ex: Nous souhaitons réserver un stand pour le Mini-salon..."
                       className="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
                     />
                   </div>
+                </>
+              )}
 
-                  {/* Bouton de confirmation */}
-                  <div className="pt-3">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || selectedVolets.length === 0}
-                      className={`w-full py-4 px-6 rounded-2xl font-bold text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md ${
-                        selectedVolets.length === 0
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-indigo-600/25 hover:scale-[1.01]'
-                      }`}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Validation en cours...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Confirmer mon enregistrement</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </>
-                      )}
-                    </button>
-                    <p className="text-[11px] text-center text-slate-400 mt-2 font-medium">
-                      Génère immédiatement votre pass d'accès officiel avec code unique.
-                    </p>
-                  </div>
-                </form>
+              {/* Bouton de confirmation */}
+              <div className="pt-3">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-indigo-600/25 hover:scale-[1.01] cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Validation en cours...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Confirmer mon inscription</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+                <p className="text-[11px] text-center text-slate-400 mt-2 font-medium">
+                  Génère immédiatement votre badge d'accès officiel avec code unique d'émargement.
+                </p>
               </div>
-
-            </div>
-
+            </form>
           </div>
         </div>
       )}
 
-      {/* Modal Affiche Agrandie */}
-      {invitation.imageUrl && (
-        <ImageModal
-          isOpen={isImageModalOpen}
-          imageUrl={invitation.imageUrl}
-          onClose={() => setIsImageModalOpen(false)}
-          title={`Affiche Officielle : ${invitation.title}`}
-        />
-      )}
-
-      {/* MODALE DE CONFIRMATION DE PARTICIPATION À UN SEUL VOLET */}
+      {/* MODALE DE CONFIRMATION DE PARTICIPATION À UNE SEULE ACTIVITÉ */}
       {isSingleVoletModalOpen && singleVolet && missingVolet && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 text-left">
@@ -548,11 +671,11 @@ export default function InvitePage({ params }: InvitePageProps) {
             </p>
 
             <p className="text-sm text-slate-700 mt-2 leading-relaxed">
-              Souhaitez-vous confirmer votre inscription à ce seul volet ou souhaitez-vous également participer au <strong className="text-indigo-950 font-bold">{missingVolet.badge}</strong> ({missingVolet.title}) ?
+              Souhaitez-vous confirmer votre inscription à cette seule activité ou souhaitez-vous également participer au <strong className="text-indigo-950 font-bold">{missingVolet.badge}</strong> ({missingVolet.title}) ?
             </p>
 
             <div className="mt-6 flex flex-col gap-3">
-              {/* Choix 2 : Ajouter le second volet */}
+              {/* Choix 2 : Ajouter la seconde activité */}
               <button
                 type="button"
                 onClick={() => {
@@ -561,18 +684,18 @@ export default function InvitePage({ params }: InvitePageProps) {
                   executeRegistration(both);
                 }}
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/25 transition-all"
+                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
                 <span>Ajouter le {missingVolet.badge} à mon inscription</span>
               </button>
 
-              {/* Choix 1 : Confirmer ce seul volet */}
+              {/* Choix 1 : Confirmer cette seule activité */}
               <button
                 type="button"
                 onClick={() => executeRegistration(selectedVolets)}
                 disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors border border-slate-200"
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors border border-slate-200 cursor-pointer"
               >
                 <span>Confirmer mon inscription au {singleVolet.badge} uniquement</span>
               </button>
@@ -580,7 +703,7 @@ export default function InvitePage({ params }: InvitePageProps) {
               <button
                 type="button"
                 onClick={() => setIsSingleVoletModalOpen(false)}
-                className="text-xs text-slate-400 hover:text-slate-600 underline text-center mt-1"
+                className="text-xs text-slate-400 hover:text-slate-600 underline text-center mt-1 cursor-pointer"
               >
                 Modifier mon choix sur le formulaire
               </button>

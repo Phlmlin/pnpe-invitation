@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Eye,
   Layers,
-  Link as LinkIcon
+  Link as LinkIcon,
+  X
 } from 'lucide-react';
 import { store } from '@/lib/store';
 import { Invitation, VoletConfig, VoletTheme, LocationStatus } from '@/lib/types';
@@ -39,33 +40,32 @@ export default function InvitationStudio({
   const [introMessage, setIntroMessage] = useState(
     initialInvitation?.introMessage || ''
   );
-  const [imageUrl, setImageUrl] = useState(initialInvitation?.imageUrl || '');
-  const [displayLargeImage, setDisplayLargeImage] = useState(
-    initialInvitation?.displayLargeImage ?? true
-  );
   const [status, setStatus] = useState<'active' | 'closed'>(
     initialInvitation?.status || 'active'
   );
 
   const [volets, setVolets] = useState<VoletConfig[]>(
-    initialInvitation?.volets || [
-      {
-        id: 'volet-1',
-        badge: 'Volet 1',
-        theme: 'blue',
-        title: '',
-        date: '',
-        time: '',
-        location: '',
-        locationStatus: 'confirmed',
-        description: ''
-      }
-    ]
+    initialInvitation?.volets && initialInvitation.volets.length > 0
+      ? initialInvitation.volets
+      : [
+          {
+            id: 'volet-1',
+            badge: 'Activité 1',
+            theme: 'blue',
+            title: '',
+            date: '',
+            time: '',
+            location: '',
+            locationStatus: 'confirmed',
+            description: '',
+            imageUrl: ''
+          }
+        ]
   );
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
@@ -80,9 +80,9 @@ export default function InvitationStudio({
     }
   };
 
-  const handleFileUpload = (file: File) => {
+  const handleActivityFileUpload = (index: number, file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Veuillez déposer un fichier image valide.');
+      alert('Veuillez déposer un fichier image valide (PNG, JPG, SVG).');
       return;
     }
     const reader = new FileReader();
@@ -109,7 +109,7 @@ export default function InvitationStudio({
         const ctx = canvas.getContext('2d');
         ctx?.drawImage(img, 0, 0, width, height);
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
-        setImageUrl(compressedBase64);
+        handleUpdateVolet(index, 'imageUrl', compressedBase64);
       };
       img.src = e.target?.result as string;
     };
@@ -121,14 +121,15 @@ export default function InvitationStudio({
     const isEven = nextNumber % 2 === 0;
     const newVolet: VoletConfig = {
       id: `volet-${Date.now()}`,
-      badge: `Volet ${nextNumber}`,
+      badge: `Activité ${nextNumber}`,
       theme: isEven ? 'emerald' : 'blue',
       title: '',
       date: '',
       time: '',
       location: '',
       locationStatus: 'confirmed',
-      description: ''
+      description: '',
+      imageUrl: ''
     };
     setVolets([...volets, newVolet]);
   };
@@ -143,7 +144,7 @@ export default function InvitationStudio({
 
   const handleDeleteVolet = (index: number) => {
     if (volets.length <= 1) {
-      alert('Une invitation doit comporter au moins un volet.');
+      alert('Une invitation doit comporter au moins une activité.');
       return;
     }
     setVolets((prev) => prev.filter((_, i) => i !== index));
@@ -172,14 +173,17 @@ export default function InvitationStudio({
     setSuccess(false);
 
     try {
+      // Trouver la première image d'activité pour l'aperçu général si nécessaire
+      const fallbackImage = volets.find((v) => Boolean(v.imageUrl))?.imageUrl;
+
       const inv: Invitation = {
         id: initialInvitation?.id || `inv-${Date.now()}`,
         slug: finalSlug,
         title: title.trim(),
         organization: organization.trim(),
         introMessage: introMessage.trim(),
-        imageUrl: imageUrl || undefined,
-        displayLargeImage,
+        imageUrl: fallbackImage || initialInvitation?.imageUrl || undefined,
+        displayLargeImage: false,
         status,
         volets,
         createdAt: initialInvitation?.createdAt || new Date().toISOString(),
@@ -203,7 +207,7 @@ export default function InvitationStudio({
     if (!initialInvitation) return;
     if (
       window.confirm(
-        `Êtes-vous sûr de vouloir supprimer définitivement cette invitation "${initialInvitation.title}" ?\n\nToutes les inscriptions associées seront également supprimées.`
+        `Êtes-vous sûr de vouloir supprimer définitivement l'invitation "${initialInvitation.title}" ?`
       )
     ) {
       setSaving(true);
@@ -211,42 +215,42 @@ export default function InvitationStudio({
         await store.deleteInvitation(initialInvitation.id);
         router.push('/admin');
       } catch (err) {
-        console.error(err);
-        alert('Erreur lors de la suppression de l\'invitation.');
+        alert('Erreur lors de la suppression : ' + (err as Error).message);
         setSaving(false);
       }
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full flex-1">
-      {/* Barre d'action */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200">
-        <div>
+    <div className="max-w-7xl mx-auto space-y-6">
+      {/* Barre d'action supérieure */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
+        <div className="flex items-center gap-3">
           <Link
             href="/admin"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors mb-1 font-semibold"
+            className="p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors shadow-xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Retour au Tableau de Bord</span>
+            <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            {isEditing ? "Modifier l'Invitation" : "Créer une Nouvelle Invitation"}
-          </h1>
-          <p className="text-xs text-slate-500">
-            Configurez votre affiche, vos volets de rendez-vous et partagez le lien généré.
-          </p>
+          <div>
+            <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              {isEditing ? "Modifier l'Invitation" : "Créer une Nouvelle Invitation"}
+            </h1>
+            <p className="text-xs text-slate-500">
+              Configurez le titre, les activités avec leurs images respectives et le lien d'accès.
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           {success && (
-            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-bold bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              Invitation enregistrée !
+              Enregistré avec succès !
             </span>
           )}
 
-          {isEditing && initialInvitation && (
+          {isEditing && (
             <button
               type="button"
               onClick={handleDelete}
@@ -272,10 +276,8 @@ export default function InvitationStudio({
 
       {/* Disposition Bicolonne */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
         {/* Formulaire */}
         <div className="lg:col-span-7 space-y-6">
-          
           {/* Section 1 : Titre & Lien */}
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 shadow-modern space-y-4">
             <h2 className="text-xs font-bold tracking-wider text-indigo-700 uppercase flex items-center gap-2">
@@ -292,7 +294,7 @@ export default function InvitationStudio({
                 required
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="Ex: Forum National pour l'Emploi et l'Insertion 2026"
+                placeholder="Ex: Présentation des Journées Économiques et Forum de l'Emploi"
                 className="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 text-slate-900 font-bold"
               />
             </div>
@@ -309,7 +311,7 @@ export default function InvitationStudio({
                     required
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
-                    placeholder="forum-national-emploi-2026"
+                    placeholder="invitation"
                     className="w-full pl-9 pr-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-indigo-700"
                   />
                 </div>
@@ -338,128 +340,82 @@ export default function InvitationStudio({
                 rows={3}
                 value={introMessage}
                 onChange={(e) => setIntroMessage(e.target.value)}
-                placeholder="Ex: La Direction Générale du PNPE invite l'ensemble des dirigeants et acteurs économiques..."
+                placeholder="Ex: La Direction Générale du PNPE invite l'ensemble des dirigeants, acteurs économiques et chercheurs d'emploi..."
                 className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 leading-relaxed focus:bg-white focus:outline-none"
               />
             </div>
           </div>
 
-          {/* Section 2 : Flyer */}
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 shadow-modern space-y-4">
-            <h2 className="text-xs font-bold tracking-wider text-emerald-700 uppercase flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-600" />
-              2. Visuel / Affiche Officielle
-            </h2>
-
-            <div
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                  handleFileUpload(e.dataTransfer.files[0]);
-                }
-              }}
-              className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
-                dragOver
-                  ? 'border-indigo-600 bg-indigo-50/50 scale-[1.01]'
-                  : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
-              }`}
-            >
-              <Upload className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-              <p className="text-xs font-bold text-slate-800">
-                Glissez votre affiche ici
-              </p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                PNG, JPG ou SVG
-              </p>
-
-              <label className="mt-3 inline-block">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleFileUpload(e.target.files[0]);
-                    }
-                  }}
-                />
-                <span className="px-4 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-xs">
-                  Choisir un fichier
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold text-slate-500 mb-1">
-                Ou URL d'image :
-              </label>
-              <input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://.../affiche.jpg"
-                className="w-full p-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-              />
-            </div>
-          </div>
-
-          {/* Section 3 : Volets */}
+          {/* Section 2 : Configuration des Activités (PNPE Ogooué-Maritime) */}
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 shadow-modern space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xs font-bold tracking-wider text-amber-700 uppercase flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                3. Configuration des Volets ({volets.length})
-              </h2>
+              <div>
+                <h2 className="text-xs font-bold tracking-wider text-amber-700 uppercase flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  2. Configuration des Activités (PNPE Ogooué-Maritime) ({volets.length})
+                </h2>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Chaque activité dispose de son propre visuel / image dédiée.
+                </p>
+              </div>
 
               <button
                 type="button"
                 onClick={handleAddVolet}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition-colors shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Ajouter un Volet</span>
+                <span>Ajouter une Activité</span>
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               {volets.map((v, idx) => (
                 <div
                   key={v.id}
-                  className={`p-5 rounded-2xl border text-xs space-y-3 ${
+                  className={`p-5 rounded-2xl border text-xs space-y-3.5 transition-all ${
                     v.theme === 'blue'
-                      ? 'bg-blue-50/50 border-blue-200'
-                      : 'bg-emerald-50/50 border-emerald-200'
+                      ? 'bg-blue-50/40 border-blue-200'
+                      : 'bg-emerald-50/40 border-emerald-200'
                   }`}
                 >
+                  {/* En-tête de l'activité */}
                   <div className="flex items-center justify-between pb-2 border-b border-slate-200/70">
-                    <span className="font-bold text-slate-800 text-sm">
-                      #{idx + 1} • {v.badge}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-extrabold text-slate-900 text-sm">
+                        #{idx + 1} • {v.badge}
+                      </span>
+                      <span
+                        className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white ${
+                          v.theme === 'blue' ? 'bg-blue-600' : 'bg-emerald-600'
+                        }`}
+                      >
+                        {v.theme === 'blue' ? 'Bleu Souverain' : 'Vert Émeraude'}
+                      </span>
+                    </div>
+
                     <button
                       type="button"
                       onClick={() => handleDeleteVolet(idx)}
                       className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                      title="Supprimer cette activité"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Ligne 1 : Nom du Badge & Thème */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                        Nom du Badge (ex: Volet 1)
+                        Nom du Badge (ex: Activité 1)
                       </label>
                       <input
                         type="text"
                         value={v.badge}
                         onChange={(e) => handleUpdateVolet(idx, 'badge', e.target.value)}
-                        className="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold"
+                        placeholder={`Activité ${idx + 1}`}
+                        className="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-900"
                       />
                     </div>
                     <div>
@@ -477,22 +433,115 @@ export default function InvitationStudio({
                     </div>
                   </div>
 
+                  {/* Ligne 2 : Titre de l'Activité */}
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Objet / Titre du Rendez-vous *
+                      Titre de l'Activité *
                     </label>
                     <input
                       type="text"
                       value={v.title}
                       onChange={(e) => handleUpdateVolet(idx, 'title', e.target.value)}
-                      placeholder="Ex: Présentation des opportunités de recrutement et d'investissement"
+                      placeholder="Ex: Présentation des Journées Économiques Gabon 2026"
                       className="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-900"
                     />
                   </div>
 
+                  {/* Ligne 3 : Visuel / Image dédiée à cette activité (AJOUT DEMANDÉ) */}
+                  <div className="p-3.5 bg-white rounded-xl border border-slate-200 space-y-2.5">
+                    <label className="block text-[11px] font-bold text-indigo-900 uppercase tracking-wide">
+                      Visuel / Image de l'activité (Upload PNG, JPG, SVG ou URL)
+                    </label>
+
+                    {v.imageUrl ? (
+                      <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-xl border border-slate-200">
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-slate-900 border border-slate-200 flex-shrink-0 flex items-center justify-center">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={v.imageUrl}
+                            alt={`Image ${v.badge}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <p className="text-[11px] font-bold text-slate-800 truncate">
+                            Image de l'activité enregistrée
+                          </p>
+                          <p className="text-[10px] text-emerald-600 font-semibold">
+                            ● Prête pour affichage invité
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateVolet(idx, 'imageUrl', '')}
+                          className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                          title="Supprimer cette image"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverIdx(idx);
+                        }}
+                        onDragLeave={() => setDragOverIdx(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverIdx(null);
+                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            handleActivityFileUpload(idx, e.dataTransfer.files[0]);
+                          }
+                        }}
+                        className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${
+                          dragOverIdx === idx
+                            ? 'border-indigo-600 bg-indigo-50/60'
+                            : 'border-slate-300 hover:border-slate-400 bg-slate-50/60'
+                        }`}
+                      >
+                        <Upload className="w-6 h-6 text-indigo-500 mx-auto mb-1" />
+                        <p className="text-[11px] font-bold text-slate-700">
+                          Glissez l'image de cette activité ici
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          PNG, JPG ou SVG
+                        </p>
+
+                        <label className="mt-2 inline-block">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleActivityFileUpload(idx, e.target.files[0]);
+                              }
+                            }}
+                          />
+                          <span className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shadow-2xs">
+                            Choisir un fichier
+                          </span>
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Alternative URL */}
+                    <div>
+                      <input
+                        type="text"
+                        value={v.imageUrl || ''}
+                        onChange={(e) => handleUpdateVolet(idx, 'imageUrl', e.target.value)}
+                        placeholder="Ou collez une URL d'image : https://.../image.jpg"
+                        className="w-full p-2 text-[11px] font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Ligne 4 : Description / Objectifs */}
                   <div>
                     <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                      Description / Objectifs du rendez-vous
+                      Description / Objectifs de l'activité
                     </label>
                     <textarea
                       rows={2}
@@ -503,7 +552,8 @@ export default function InvitationStudio({
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Ligne 5 : Date & Heure */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-1">
                         Date
@@ -512,7 +562,7 @@ export default function InvitationStudio({
                         type="text"
                         value={v.date}
                         onChange={(e) => handleUpdateVolet(idx, 'date', e.target.value)}
-                        placeholder="Ex: Vendredi 24 octobre 2026"
+                        placeholder="Ex: Vendredi 16 octobre 2026"
                         className="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium"
                       />
                     </div>
@@ -524,13 +574,14 @@ export default function InvitationStudio({
                         type="text"
                         value={v.time}
                         onChange={(e) => handleUpdateVolet(idx, 'time', e.target.value)}
-                        placeholder="Ex: À 10h00"
+                        placeholder="Ex: À 10h00 ou De 9h à 17h"
                         className="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Ligne 6 : Lieu & Statut */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[11px] font-bold text-slate-600 mb-1">
                         Lieu
@@ -539,7 +590,7 @@ export default function InvitationStudio({
                         type="text"
                         value={v.location}
                         onChange={(e) => handleUpdateVolet(idx, 'location', e.target.value)}
-                        placeholder="Ex: Siège du PNPE, Libreville"
+                        placeholder="Ex: Centre Culturel Total"
                         className="w-full p-2 bg-white border border-slate-200 rounded-xl"
                       />
                     </div>
@@ -561,10 +612,9 @@ export default function InvitationStudio({
               ))}
             </div>
           </div>
-
         </div>
 
-        {/* Aperçu en direct */}
+        {/* Aperçu en direct (Colonne droite) */}
         <div className="lg:col-span-5 sticky top-6 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -574,20 +624,18 @@ export default function InvitationStudio({
           </div>
 
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 shadow-modern-lg space-y-4">
-            {imageUrl && (
-              <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 max-h-48 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imageUrl}
-                  alt="Aperçu"
-                  className="w-full h-auto object-cover max-h-48"
-                />
-              </div>
-            )}
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-wider">
+              <span>INVITATION</span>
+            </div>
 
             <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
               {title || "Titre de votre invitation..."}
             </h3>
+
+            <div className="text-xs text-slate-500 font-mono pb-2 border-b border-slate-100 flex items-center justify-between">
+              <span>Réf : {slug || 'lien-public'}</span>
+              <span className="text-emerald-700 font-bold">● Inscriptions ouvertes</span>
+            </div>
 
             {introMessage && (
               <p className="text-xs text-slate-600 leading-relaxed">
@@ -595,7 +643,10 @@ export default function InvitationStudio({
               </p>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-3 pt-2">
+              <p className="text-xs font-bold text-slate-800">
+                Activités configurées ({volets.length}) :
+              </p>
               {volets.map((v) => (
                 <VoletCard
                   key={v.id}
@@ -608,7 +659,6 @@ export default function InvitationStudio({
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

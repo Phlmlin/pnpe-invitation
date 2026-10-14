@@ -206,7 +206,7 @@ export default function ParticipantBadge({
               </div>
               <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-[9px] font-extrabold tracking-wider">
                 <ShieldCheck className="w-3 h-3 text-indigo-600" />
-                <span>INVITÉ</span>
+                <span>{rsvp.company?.toLowerCase().includes('demandeur') ? "CANDIDAT" : "INVITÉ"}</span>
               </div>
             </div>
           </div>
@@ -232,13 +232,17 @@ export default function ParticipantBadge({
               ) : null}
             </div>
 
-            {/* Entreprise / Organisme */}
+            {/* Entreprise / Organisme / Statut */}
             <div className="w-full bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-1.5 text-center shadow-xs">
               <p className="text-[8px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
-                ENTREPRISE / ORGANISME
+                {rsvp.company?.toLowerCase().includes('demandeur') ? 'PROFIL & STATUT' : 'ENTREPRISE / ORGANISME'}
               </p>
               <p className="text-xs font-black text-indigo-950 flex items-center justify-center gap-1.5 break-words">
-                <Building className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                {rsvp.company?.toLowerCase().includes('demandeur') ? (
+                  <User className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                ) : (
+                  <Building className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                )}
                 <span>{rsvp.company}</span>
               </p>
             </div>

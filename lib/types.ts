@@ -11,6 +11,7 @@ export interface VoletConfig {
   location: string;         // ex: "Centre Culturel Total"
   locationStatus: LocationStatus; // "confirmed" | "negotiation"
   description?: string;
+  imageUrl?: string;        // Visuel / Image spécifique de l'activité
 }
 
 export interface Invitation {

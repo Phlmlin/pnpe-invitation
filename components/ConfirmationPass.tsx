@@ -47,16 +47,16 @@ export default function ConfirmationPass({
           <div className="w-1/3 h-full bg-[#3A75C4]" />
         </div>
 
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-xs uppercase tracking-wider mb-3">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold text-xs uppercase tracking-wider mb-3">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          <span>Inscription confirmée avec succès</span>
+          <span>Validation Officielle</span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          Bienvenue, {rsvp.participantName} !
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          Félicitations, votre inscription a réussi
         </h2>
-        <p className="text-sm text-slate-600 mt-1 max-w-lg mx-auto">
-          Votre enregistrement pour <span className="font-semibold text-slate-800">{invitation.title}</span> a bien été pris en compte.
+        <p className="text-sm text-slate-600 mt-1.5 max-w-lg mx-auto">
+          Participant : <span className="font-bold text-slate-800">{rsvp.participantName}</span> • <span className="text-indigo-900 font-semibold">{invitation.title}</span>
         </p>
 
         {/* Sélecteur de vue : Badge officiel vs Détails */}
