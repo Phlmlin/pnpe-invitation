@@ -10,6 +10,7 @@ interface VoletCardProps {
   isSelected: boolean;
   onToggle: (id: string) => void;
   disabled?: boolean;
+  hideImage?: boolean;
 }
 
 export default function VoletCard({
@@ -17,6 +18,7 @@ export default function VoletCard({
   isSelected,
   onToggle,
   disabled = false,
+  hideImage = false,
 }: VoletCardProps) {
   const isBlue = volet.theme === 'blue';
   const [isZoomOpen, setIsZoomOpen] = useState(false);
@@ -39,18 +41,18 @@ export default function VoletCard({
             onToggle(volet.id);
           }
         }}
-        className={`relative p-5 sm:p-6 rounded-3xl border-2 transition-all duration-200 cursor-pointer select-none text-left shadow-sm ${
+        className={`relative p-5 sm:p-6 lg:p-7 rounded-3xl border-2 transition-all duration-200 cursor-pointer select-none text-left shadow-sm h-full flex flex-col justify-between ${
           isSelected
             ? isBlue
-              ? 'bg-gradient-to-br from-indigo-50/95 via-white to-blue-50/90 border-indigo-600 ring-4 ring-indigo-500/20 shadow-modern-lg scale-[1.01]'
-              : 'bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/90 border-emerald-600 ring-4 ring-emerald-500/20 shadow-modern-lg scale-[1.01]'
+              ? 'bg-gradient-to-br from-indigo-50/95 via-white to-blue-50/90 border-indigo-600 ring-4 ring-indigo-500/20 shadow-modern-lg scale-[1.008]'
+              : 'bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/90 border-emerald-600 ring-4 ring-emerald-500/20 shadow-modern-lg scale-[1.008]'
             : 'bg-white hover:bg-slate-50/90 border-slate-200 hover:border-slate-400'
         } ${disabled ? 'opacity-85 cursor-default' : 'hover:-translate-y-0.5'}`}
       >
         {/* Contenu principal : Disposition Image + Infos */}
-        <div className="flex flex-col md:flex-row gap-6 items-stretch">
-          {/* Image dédiée à l'activité : grand format, bien visible à côté de l'activité, sans coupure */}
-          {volet.imageUrl && (
+        <div className={`flex flex-col ${!hideImage && volet.imageUrl ? 'md:flex-row gap-6 items-stretch' : 'gap-4'} w-full flex-1 justify-between`}>
+          {/* Image dédiée à l'activité : affichée uniquement si non masquée */}
+          {!hideImage && volet.imageUrl && (
             <div className="w-full md:w-72 lg:w-84 xl:w-96 flex-shrink-0 group/img relative rounded-2xl overflow-hidden border border-slate-200/90 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 shadow-md flex flex-col justify-between min-h-[260px] sm:min-h-[300px] md:min-h-[340px]">
               {/* Badge supérieur sur le visuel */}
               <div className="absolute top-2.5 left-2.5 z-10">

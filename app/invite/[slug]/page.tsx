@@ -25,6 +25,7 @@ import { store } from '@/lib/store';
 import { Invitation, RSVPRegistration } from '@/lib/types';
 import OfficialHeader from '@/components/OfficialHeader';
 import VoletCard from '@/components/VoletCard';
+import ActivityPoster from '@/components/ActivityPoster';
 
 interface InvitePageProps {
   params: Promise<{
@@ -421,15 +422,31 @@ export default function InvitePage({ params }: InvitePageProps) {
               </h2>
             </div>
 
-            {/* Liste des Activités avec image dédiée bien visible à côté */}
-            <div className="space-y-6 pt-1">
+            {/* Grille en 2 colonnes distinctes : Grandes affiches à gauche | Cartes d'informations à droite */}
+            <div className="space-y-8 pt-2">
               {invitation.volets.map((volet) => (
-                <VoletCard
-                  key={volet.id}
-                  volet={volet}
-                  isSelected={selectedVolets.includes(volet.id)}
-                  onToggle={handleToggleVolet}
-                />
+                <div key={volet.id} className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+                  {/* Colonne de gauche (sur desktop) / En premier (sur mobile) : Affiche en grand, indépendante et non enfermée dans la carte */}
+                  {volet.imageUrl && (
+                    <div className="md:col-span-5 flex flex-col">
+                      <ActivityPoster
+                        volet={volet}
+                        isSelected={selectedVolets.includes(volet.id)}
+                        onToggle={handleToggleVolet}
+                      />
+                    </div>
+                  )}
+
+                  {/* Colonne de droite (sur desktop) / En second (sur mobile) : Carte interactive d'informations sans image */}
+                  <div className={volet.imageUrl ? 'md:col-span-7 flex flex-col' : 'md:col-span-12 flex flex-col'}>
+                    <VoletCard
+                      volet={volet}
+                      isSelected={selectedVolets.includes(volet.id)}
+                      onToggle={handleToggleVolet}
+                      hideImage={true}
+                    />
+                  </div>
+                </div>
               ))}
             </div>
 
