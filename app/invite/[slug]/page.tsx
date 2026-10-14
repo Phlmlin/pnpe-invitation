@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, use } from 'react';
+import Link from 'next/link';
 import {
   Maximize2,
   CheckCircle2,
@@ -84,12 +85,12 @@ export default function InvitePage({ params }: InvitePageProps) {
         <p className="text-sm text-slate-600 max-w-md mb-6">
           Ce lien d'invitation n'existe pas ou a expiré.
         </p>
-        <a
-          href="/invite/ogooue-maritime-2026"
-          className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+        <Link
+          href="/"
+          className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors"
         >
-          Voir l'invitation officielle
-        </a>
+          Retour à l'accueil
+        </Link>
       </div>
     );
   }

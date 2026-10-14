@@ -62,13 +62,17 @@ let memoryState: StoreState = {
 function initLocalStorage() {
   if (!isClient()) return;
 
+  const initialized = localStorage.getItem('pnpe_initialized_v2');
+  if (initialized) return;
+
+  localStorage.setItem('pnpe_initialized_v2', 'true');
   const storedInv = localStorage.getItem(STORAGE_KEY_INVITATIONS);
-  if (!storedInv) {
+  if (storedInv === null) {
     localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify([DEFAULT_INVITATION]));
   }
 
   const storedRsvps = localStorage.getItem(STORAGE_KEY_RSVPS);
-  if (!storedRsvps) {
+  if (storedRsvps === null) {
     localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(DEFAULT_RSVPS));
   }
 }
@@ -148,14 +152,8 @@ export const store = {
           .select('*')
           .order('createdAt', { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           return data as Invitation[];
-        }
-
-        // Si la table est encore vide dans Supabase, insérer automatiquement l'invitation initiale
-        if (!error && data && data.length === 0) {
-          await supabase.from('invitations').upsert(DEFAULT_INVITATION);
-          return [DEFAULT_INVITATION];
         }
       } catch (err) {
         console.warn('Fallback local après erreur Supabase getInvitations:', err);
@@ -167,11 +165,11 @@ export const store = {
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY_INVITATIONS);
-      if (raw) return JSON.parse(raw);
+      if (raw !== null) return JSON.parse(raw);
     } catch {
       // fallback
     }
-    return [DEFAULT_INVITATION];
+    return [];
   },
 
   async getInvitationBySlug(slug: string): Promise<Invitation | null> {
@@ -254,6 +252,7 @@ export const store = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
+        await supabase.from('rsvps').delete().eq('invitationId', id);
         await supabase.from('invitations').delete().eq('id', id);
       } catch (err) {
         console.warn('Erreur suppression Supabase deleteInvitation:', err);
@@ -261,20 +260,24 @@ export const store = {
     }
 
     if (isClient()) {
-      initLocalStorage();
-      const current = await this.getInvitations();
-      const filtered = current.filter((i) => i.id !== id);
-      localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(filtered));
+      try {
+        const rawInv = localStorage.getItem(STORAGE_KEY_INVITATIONS);
+        const currentInv: Invitation[] = rawInv ? JSON.parse(rawInv) : [];
+        const filteredInv = currentInv.filter((i) => i.id !== id);
+        localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(filteredInv));
 
-      const rsvps = await this.getRSVPs();
-      const filteredRsvps = rsvps.filter((r) => r.invitationId !== id);
-      localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(filteredRsvps));
-
+        const rawRsvps = localStorage.getItem(STORAGE_KEY_RSVPS);
+        const currentRsvps: RSVPRegistration[] = rawRsvps ? JSON.parse(rawRsvps) : [];
+        const filteredRsvps = currentRsvps.filter((r) => r.invitationId !== id);
+        localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(filteredRsvps));
+      } catch (e) {
+        console.warn('Erreur suppression localStorage deleteInvitation:', e);
+      }
       notifyUpdate();
-    } else {
-      memoryState.invitations = memoryState.invitations.filter((i) => i.id !== id);
-      memoryState.rsvps = memoryState.rsvps.filter((r) => r.invitationId !== id);
     }
+
+    memoryState.invitations = memoryState.invitations.filter((i) => i.id !== id);
+    memoryState.rsvps = memoryState.rsvps.filter((r) => r.invitationId !== id);
   },
 
   async getRSVPs(invitationId?: string): Promise<RSVPRegistration[]> {
@@ -284,15 +287,8 @@ export const store = {
         let query = supabase.from('rsvps').select('*').order('createdAt', { ascending: false });
         if (invitationId) query = query.eq('invitationId', invitationId);
         const { data, error } = await query;
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           return data as RSVPRegistration[];
-        }
-        if (!error && data && data.length === 0 && invitationId === DEFAULT_INVITATION.id) {
-          // Si la table est encore vide dans Supabase, insérer les participants par défaut
-          for (const seed of DEFAULT_RSVPS) {
-            await supabase.from('rsvps').upsert(seed);
-          }
-          return DEFAULT_RSVPS;
         }
       } catch (err) {
         console.warn('Fallback local après erreur Supabase getRSVPs:', err);
@@ -308,16 +304,16 @@ export const store = {
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY_RSVPS);
-      if (raw) {
+      if (raw !== null) {
         const parsed: RSVPRegistration[] = JSON.parse(raw);
-        return invitationId ? parsed.filter((r) => r.invitationId === invitationId) : parsed;
+        if (Array.isArray(parsed)) {
+          return invitationId ? parsed.filter((r) => r.invitationId === invitationId) : parsed;
+        }
       }
     } catch {
       // fallback
     }
-    return invitationId
-      ? DEFAULT_RSVPS.filter((r) => r.invitationId === invitationId)
-      : DEFAULT_RSVPS;
+    return [];
   },
 
   async saveRSVP(rsvp: RSVPRegistration): Promise<RSVPRegistration> {
@@ -364,14 +360,18 @@ export const store = {
     }
 
     if (isClient()) {
-      initLocalStorage();
-      const current = await this.getRSVPs();
-      const filtered = current.filter((r) => r.id !== id);
-      localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(filtered));
+      try {
+        const rawRsvps = localStorage.getItem(STORAGE_KEY_RSVPS);
+        const currentRsvps: RSVPRegistration[] = rawRsvps ? JSON.parse(rawRsvps) : [];
+        const filtered = currentRsvps.filter((r) => r.id !== id);
+        localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(filtered));
+      } catch (e) {
+        console.warn('Erreur suppression localStorage deleteRSVP:', e);
+      }
       notifyUpdate();
-    } else {
-      memoryState.rsvps = memoryState.rsvps.filter((r) => r.id !== id);
     }
+
+    memoryState.rsvps = memoryState.rsvps.filter((r) => r.id !== id);
   },
 
   async getStats(invitationId: string) {

@@ -88,7 +88,7 @@ INSERT INTO public.invitations (
     'ogooue-maritime-2026',
     'Action auprès des opérateurs économiques de l''Ogooué-Maritime',
     'Pôle National de Promotion de l''Emploi - PNPE',
-    'Dans le cadre de la redynamisation de l''emploi et du renforcement du partenariat public-privé, la Direction Provinciale du PNPE invite l''ensemble des dirigeants et directeurs des ressources humaines aux deux journées d''échanges stratégiques à Port-Gentil.',
+    'Dans le cadre de la redynamisation de l''emploi et du renforcement du partenariat public-privé, la Direction Générale du PNPE invite l''ensemble des dirigeants et directeurs des ressources humaines aux deux journées d''échanges stratégiques.',
     '/logo-pnpe.png',
     true,
     'active',

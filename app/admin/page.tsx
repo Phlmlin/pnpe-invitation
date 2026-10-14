@@ -235,7 +235,29 @@ export default function AdminDashboardPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-5">
+          {invitations.length === 0 ? (
+            <div className="bg-white/80 backdrop-blur-md border border-dashed border-slate-300 rounded-3xl p-10 sm:p-14 text-center flex flex-col items-center justify-center space-y-4 shadow-sm">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                <Layers className="w-7 h-7 text-indigo-500" />
+              </div>
+              <div className="max-w-md">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800">
+                  Aucune invitation active
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Toutes les invitations ont été supprimées ou aucune n'a encore été créée.
+                </p>
+              </div>
+              <Link
+                href="/admin/new"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 hover:scale-[1.02]"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Créer une invitation</span>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-5">
             {invitations.map((inv) => {
               const stats = statsMap[inv.id] || { total: 0, v1: 0, v2: 0, both: 0, attendees: 0 };
               const isCopied = copiedId === inv.id;
@@ -380,6 +402,7 @@ export default function AdminDashboardPage() {
               );
             })}
           </div>
+          )}
         </div>
 
       </div>
