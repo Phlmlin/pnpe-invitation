@@ -1,28 +1,24 @@
 import { AdminUser, TeamMember } from './types';
-import { DEFAULT_MEMBERS } from './store';
+import { store, DEFAULT_MEMBERS } from './store';
 
 const ADMIN_SESSION_KEY = 'pnpe_admin_auth_v1';
 const STORAGE_KEY_MEMBERS = 'pnpe_team_members_v1';
 
 export const auth = {
-  login(email: string, code: string): { success: boolean; error?: string; user?: AdminUser } {
+  async login(email: string, code: string): Promise<{ success: boolean; error?: string; user?: AdminUser }> {
     const cleanEmail = email.trim().toLowerCase();
     const cleanCode = code.trim();
 
-    // 1. Récupérer les membres de l'équipe (LocalStorage ou DEFAULT_MEMBERS)
-    let members: TeamMember[] = DEFAULT_MEMBERS;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY_MEMBERS);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            members = parsed;
-          }
-        }
-      } catch {
-        // fallback
-      }
+    // 1. Récupérer les membres de l'équipe (depuis Supabase en direct)
+    let members: TeamMember[] = [];
+    try {
+      members = await store.getTeamMembers();
+    } catch {
+      members = DEFAULT_MEMBERS;
+    }
+
+    if (!members || members.length === 0) {
+      members = DEFAULT_MEMBERS;
     }
 
     // 2. Chercher le compte correspondant dans la liste des collaborateurs

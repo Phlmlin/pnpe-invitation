@@ -13,16 +13,22 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e?: React.FormEvent) => {
+  const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const result = auth.login(email, code);
-    if (result.success) {
-      router.push('/admin');
-    } else {
-      setError(result.error || 'Identifiants invalides');
+    try {
+      const result = await auth.login(email, code);
+      if (result.success) {
+        window.location.href = '/admin';
+      } else {
+        setError(result.error || 'Identifiants invalides');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Erreur lors de la connexion. Veuillez réessayer.');
       setLoading(false);
     }
   };

@@ -200,24 +200,34 @@ export const store = {
         const { data, error } = await supabase
           .from('invitations')
           .select('*')
+          .neq('id', '__pnpe_team_members_store__')
+          .neq('slug', '__pnpe_team_members_store__')
           .order('createdAt', { ascending: false });
 
         if (!error && data) {
-          return (data as Invitation[]).map(normalizeInvitationVolets);
+          return (data as Invitation[])
+            .filter((i) => i.id !== '__pnpe_team_members_store__' && i.slug !== '__pnpe_team_members_store__')
+            .map(normalizeInvitationVolets);
         }
       } catch (err) {
         console.warn('Fallback local après erreur Supabase getInvitations:', err);
       }
     }
 
-    if (!isClient()) return memoryState.invitations.map(normalizeInvitationVolets);
+    if (!isClient()) {
+      return memoryState.invitations
+        .filter((i) => i.id !== '__pnpe_team_members_store__' && i.slug !== '__pnpe_team_members_store__')
+        .map(normalizeInvitationVolets);
+    }
     initLocalStorage();
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY_INVITATIONS);
       if (raw !== null) {
         const parsed: Invitation[] = JSON.parse(raw);
-        return parsed.map(normalizeInvitationVolets);
+        return parsed
+          .filter((i) => i.id !== '__pnpe_team_members_store__' && i.slug !== '__pnpe_team_members_store__')
+          .map(normalizeInvitationVolets);
       }
     } catch {
       // fallback
@@ -227,6 +237,8 @@ export const store = {
 
   async getInvitationBySlug(slug: string): Promise<Invitation | null> {
     const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
+    if (cleanSlug === '__pnpe_team_members_store__') return null;
+
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
@@ -236,7 +248,7 @@ export const store = {
           .ilike('slug', cleanSlug)
           .maybeSingle();
 
-        if (!error && data) {
+        if (!error && data && data.id !== '__pnpe_team_members_store__') {
           return normalizeInvitationVolets(data as Invitation);
         }
       } catch (err) {
@@ -483,16 +495,39 @@ export const store = {
   async getTeamMembers(): Promise<TeamMember[]> {
     const supabase = getSupabaseClient();
     if (supabase) {
+      // 1. Essayer d'abord la table dédiée team_members
       try {
         const { data, error } = await supabase
           .from('team_members')
           .select('*')
           .order('createdAt', { ascending: true });
         if (!error && data && data.length > 0) {
+          if (isClient()) {
+            localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(data));
+          }
           return data as TeamMember[];
         }
+      } catch {}
+
+      // 2. Fallback sur le document persistant __pnpe_team_members_store__ dans invitations
+      try {
+        const { data: doc, error: docErr } = await supabase
+          .from('invitations')
+          .select('introMessage')
+          .eq('id', '__pnpe_team_members_store__')
+          .maybeSingle();
+
+        if (!docErr && doc && doc.introMessage) {
+          const parsed: TeamMember[] = JSON.parse(doc.introMessage);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            if (isClient()) {
+              localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(parsed));
+            }
+            return parsed;
+          }
+        }
       } catch (err) {
-        console.warn('Fallback local après erreur Supabase getTeamMembers:', err);
+        console.warn('Erreur lecture Supabase fallback team members:', err);
       }
     }
 
@@ -516,63 +551,87 @@ export const store = {
   },
 
   async saveTeamMember(member: TeamMember): Promise<TeamMember> {
+    const current = await this.getTeamMembers();
+    const index = current.findIndex(
+      (m) => m.id === member.id || m.email.toLowerCase() === member.email.toLowerCase()
+    );
+    if (index >= 0) {
+      current[index] = member;
+    } else {
+      current.push(member);
+    }
+
     const supabase = getSupabaseClient();
     if (supabase) {
+      // Sauvegarder dans team_members si la table existe
       try {
-        const { error } = await supabase.from('team_members').upsert(member);
-        if (error) {
-          console.warn('Erreur sauvegarde team_members Supabase:', error);
-        }
-      } catch (err) {
-        console.warn('Erreur insertion Supabase team_members:', err);
+        await supabase.from('team_members').upsert(member);
+      } catch {}
+
+      // Toujours persister dans __pnpe_team_members_store__ dans Supabase
+      try {
+        const doc = {
+          id: '__pnpe_team_members_store__',
+          slug: '__pnpe_team_members_store__',
+          title: 'PNPE Team Members Storage',
+          organization: 'PNPE System',
+          introMessage: JSON.stringify(current),
+          displayLargeImage: false,
+          status: 'closed',
+          volets: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await supabase.from('invitations').upsert(doc, { onConflict: 'id' });
+      } catch (e) {
+        console.warn('Erreur sauvegarde Supabase fallback team members:', e);
       }
     }
 
     if (isClient()) {
-      initLocalStorage();
-      const current = await this.getTeamMembers();
-      const index = current.findIndex(
-        (m) => m.id === member.id || m.email.toLowerCase() === member.email.toLowerCase()
-      );
-      if (index >= 0) {
-        current[index] = member;
-      } else {
-        current.push(member);
-      }
       localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(current));
       notifyUpdate();
     } else {
-      if (!memoryState.members) memoryState.members = [...DEFAULT_MEMBERS];
-      const idx = memoryState.members.findIndex(
-        (m) => m.id === member.id || m.email.toLowerCase() === member.email.toLowerCase()
-      );
-      if (idx >= 0) memoryState.members[idx] = member;
-      else memoryState.members.push(member);
+      memoryState.members = current;
     }
 
     return member;
   },
 
   async deleteTeamMember(id: string): Promise<void> {
+    const current = await this.getTeamMembers();
+    const filtered = current.filter((m) => m.id !== id);
+
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         await supabase.from('team_members').delete().eq('id', id);
-      } catch (err) {
-        console.warn('Erreur suppression Supabase team_members:', err);
+      } catch {}
+
+      try {
+        const doc = {
+          id: '__pnpe_team_members_store__',
+          slug: '__pnpe_team_members_store__',
+          title: 'PNPE Team Members Storage',
+          organization: 'PNPE System',
+          introMessage: JSON.stringify(filtered),
+          displayLargeImage: false,
+          status: 'closed',
+          volets: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await supabase.from('invitations').upsert(doc, { onConflict: 'id' });
+      } catch (e) {
+        console.warn('Erreur suppression Supabase fallback team members:', e);
       }
     }
 
     if (isClient()) {
-      initLocalStorage();
-      const current = await this.getTeamMembers();
-      const filtered = current.filter((m) => m.id !== id);
       localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(filtered));
       notifyUpdate();
-    }
-
-    if (memoryState.members) {
-      memoryState.members = memoryState.members.filter((m) => m.id !== id);
+    } else {
+      memoryState.members = filtered;
     }
   },
 
