@@ -3,8 +3,6 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import {
-  Phone,
-  Mail,
   ArrowRight,
   ShieldAlert,
   Loader2,
@@ -429,7 +427,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                 <span>Étape 2 sur 2</span>
               </div>
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
-                Formulaire d'inscription (Demandeurs d'emploi)
+                Formulaire d'inscription des Demandeurs d'emploi
               </h2>
             </div>
 
@@ -442,103 +440,68 @@ export default function InvitePage({ params }: InvitePageProps) {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Nom (Obligatoire) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Nom de Famille *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={nom}
-                        onChange={(e) => setNom(e.target.value)}
-                        placeholder="Ex: OBAME"
-                        className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
-                      />
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Nom (Obligatoire) */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Nom *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={nom}
+                    onChange={(e) => setNom(e.target.value)}
+                    placeholder="Ex: OBAME"
+                    className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                  />
+                </div>
 
-                    {/* Prénom (Obligatoire) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Prénom(s) *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={prenom}
-                        onChange={(e) => setPrenom(e.target.value)}
-                        placeholder="Ex: Jean-Marc"
-                        className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
-                      />
-                    </div>
-                  </div>
+                {/* Prénom (Obligatoire) */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Prénom *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={prenom}
+                    onChange={(e) => setPrenom(e.target.value)}
+                    placeholder="Ex: Jean-Marc"
+                    className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                  />
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Numéro PNPE (Facultatif) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Numéro PNPE <span className="text-slate-400 font-normal">(Facultatif)</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={pnpeNumber}
-                        onChange={(e) => setPnpeNumber(e.target.value)}
-                        placeholder="Ex: PNPE-12345"
-                        className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans font-mono"
-                      />
-                    </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Numéro PNPE (Facultatif) */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Numéro PNPE <span className="text-slate-400 font-normal">(Facultatif)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={pnpeNumber}
+                    onChange={(e) => setPnpeNumber(e.target.value)}
+                    placeholder="Ex: PNPE-12345"
+                    className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans font-mono"
+                  />
+                </div>
 
-                    {/* Profil (Obligatoire) */}
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Profil / Métier recherché *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={profil}
-                        onChange={(e) => setProfil(e.target.value)}
-                        placeholder="Ex: Comptable, Développeur Web, Électricien..."
-                        className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Coordonnées Demandeur d'emploi (Facultatif) */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Téléphone / WhatsApp <span className="text-slate-400 font-normal">(Facultatif)</span>
-                      </label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+241 77 00 00 00 (Optionnel)"
-                          className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Adresse E-mail <span className="text-slate-400 font-normal">(Facultatif)</span>
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="votre.email@exemple.ga (Optionnel)"
-                          className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                {/* Profil (Obligatoire) */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Profil *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={profil}
+                    onChange={(e) => setProfil(e.target.value)}
+                    placeholder="Ex: Comptable, Développeur Web, Électricien..."
+                    className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                  />
+                </div>
+              </div>
 
                   {/* Bouton de confirmation Demandeur */}
                   <div className="pt-3">

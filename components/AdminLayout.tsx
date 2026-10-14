@@ -255,7 +255,7 @@ export default function AdminLayout({
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Rechercher une activité, un participant... (⌘K)"
+                placeholder="Rechercher une activité, un demandeur... (⌘K)"
                 className="w-full pl-10 pr-4 py-2 text-xs bg-slate-100/80 border border-slate-200/70 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 text-slate-800 transition-all font-medium"
               />
             </div>

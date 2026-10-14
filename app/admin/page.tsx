@@ -126,18 +126,18 @@ export default function AdminDashboardPage() {
 
         {/* 4 CARTES MÉTRIQUES SAAS (SQUIRCLES COLORÉS) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Métrique 1 : Total Entreprises */}
+          {/* Métrique 1 : Total Demandeurs */}
           <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Total Entreprises
+                TOTAL DEMANDEURS
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tabular-nums">
                 {totalCompaniesAll}
               </p>
               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-600 font-bold mt-1">
                 <TrendingUp className="w-3 h-3" />
-                <span>Opérateurs enregistrés</span>
+                <span>Demandeurs enregistrés</span>
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-xs">
@@ -145,11 +145,11 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Métrique 2 : Inscrits Volet 1 */}
+          {/* Métrique 2 : Inscrits Activité 1 */}
           <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
-                Inscrits Volet 1
+                INSCRITS ACTIVITÉ 1
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold text-blue-900 mt-1 tabular-nums">
                 {totalVolet1All}
@@ -163,11 +163,11 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Métrique 3 : Inscrits Volet 2 */}
+          {/* Métrique 3 : Inscrits Activité 2 */}
           <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                Inscrits Volet 2
+                INSCRITS ACTIVITÉ 2
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1 tabular-nums">
                 {totalVolet2All}
@@ -181,11 +181,11 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Métrique 4 : Les Deux Volets */}
+          {/* Métrique 4 : Les Deux Activités */}
           <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                Les Deux Volets
+                LES DEUX ACTIVITÉS
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1 tabular-nums">
                 {totalBothAll}
