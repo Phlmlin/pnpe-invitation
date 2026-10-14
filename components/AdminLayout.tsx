@@ -65,15 +65,15 @@ export default function AdminLayout({
     },
     {
       label: 'Suivi Inscriptions (RSVP)',
-      href: `/admin/${currentInvitationId}/rsvps`,
+      href: '/admin/rsvps',
       icon: Users,
-      active: pathname.includes('/rsvps'),
+      active: pathname.startsWith('/admin/rsvps') || pathname.includes('/rsvps'),
     },
     {
       label: 'Générateur Kit E-mail',
-      href: `/admin/${currentInvitationId}/email`,
+      href: '/admin/email',
       icon: Mail,
-      active: pathname.includes('/email'),
+      active: pathname.startsWith('/admin/email') || pathname.includes('/email'),
     },
   ];
 

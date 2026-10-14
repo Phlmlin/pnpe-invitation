@@ -31,18 +31,13 @@ export default function InvitationStudio({
 }: InvitationStudioProps) {
   const router = useRouter();
 
-  const [title, setTitle] = useState(
-    initialInvitation?.title || "Action auprès des opérateurs économiques de l'Ogooué-Maritime"
-  );
-  const [slug, setSlug] = useState(
-    initialInvitation?.slug || 'ogooue-maritime-2026'
-  );
+  const [title, setTitle] = useState(initialInvitation?.title || '');
+  const [slug, setSlug] = useState(initialInvitation?.slug || '');
   const [organization, setOrganization] = useState(
     initialInvitation?.organization || "Pôle National de Promotion de l'Emploi - PNPE"
   );
   const [introMessage, setIntroMessage] = useState(
-    initialInvitation?.introMessage ||
-      "La Direction Générale du PNPE invite les chefs d'entreprises et directeurs des ressources humaines de la province de l'Ogooué-Maritime à participer à deux séquences de concertation et d'action stratégique."
+    initialInvitation?.introMessage || ''
   );
   const [imageUrl, setImageUrl] = useState(initialInvitation?.imageUrl || '');
   const [displayLargeImage, setDisplayLargeImage] = useState(
@@ -58,23 +53,12 @@ export default function InvitationStudio({
         id: 'volet-1',
         badge: 'Volet 1',
         theme: 'blue',
-        title: 'Présentation des Journées Économiques et du Forum International de l\'Emploi (27 et 28 novembre 2026 à Paris)',
-        date: 'Vendredi 16 octobre 2026',
-        time: 'À 10h00',
-        location: 'Centre Culturel Total',
+        title: '',
+        date: '',
+        time: '',
+        location: '',
         locationStatus: 'confirmed',
-        description: 'Présentation exclusive des opportunités d\'investissement, de sponsoring et de visibilité internationale pour les entreprises gabonaises lors des Journées Économiques à Paris.'
-      },
-      {
-        id: 'volet-2',
-        badge: 'Volet 2',
-        theme: 'emerald',
-        title: 'Mini-salon de l\'emploi',
-        date: 'Samedi 17 octobre 2026',
-        time: 'De 9h à 17h',
-        location: 'Centre Culturel Total',
-        locationStatus: 'negotiation',
-        description: 'Plateforme opérationnelle de recrutement direct, mise en relation qualifiée entre entreprises locales et demandeurs d\'emploi certifiés.'
+        description: ''
       }
     ]
   );
@@ -91,8 +75,8 @@ export default function InvitationStudio({
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      setSlug(generatedSlug || 'nouvelle-invitation');
+        .replace(/^-+|-+$/g, '');
+      setSlug(generatedSlug);
     }
   };
 
@@ -103,7 +87,31 @@ export default function InvitationStudio({
     }
     const reader = new FileReader();
     reader.onload = (e) => {
-      setImageUrl(e.target?.result as string);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_DIM = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        setImageUrl(compressedBase64);
+      };
+      img.src = e.target?.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -115,12 +123,12 @@ export default function InvitationStudio({
       id: `volet-${Date.now()}`,
       badge: `Volet ${nextNumber}`,
       theme: isEven ? 'emerald' : 'blue',
-      title: `Rendez-vous Volet ${nextNumber}`,
-      date: 'Date à définir',
-      time: 'À 10h00',
-      location: 'Centre Culturel Total',
+      title: '',
+      date: '',
+      time: '',
+      location: '',
       locationStatus: 'confirmed',
-      description: 'Description des objectifs de cette séquence.'
+      description: ''
     };
     setVolets([...volets, newVolet]);
   };
@@ -143,13 +151,30 @@ export default function InvitationStudio({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) {
+      alert("Veuillez renseigner un titre pour l'invitation.");
+      return;
+    }
+
+    const finalSlug = (slug.trim() || title)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    if (!finalSlug) {
+      alert("Veuillez définir un lien public (slug).");
+      return;
+    }
+
     setSaving(true);
     setSuccess(false);
 
     try {
       const inv: Invitation = {
         id: initialInvitation?.id || `inv-${Date.now()}`,
-        slug: slug.trim().toLowerCase(),
+        slug: finalSlug,
         title: title.trim(),
         organization: organization.trim(),
         introMessage: introMessage.trim(),
@@ -165,10 +190,10 @@ export default function InvitationStudio({
       setSuccess(true);
       setTimeout(() => {
         router.push('/admin');
-      }, 1000);
+      }, 700);
     } catch (err) {
       console.error(err);
-      alert('Erreur lors de la sauvegarde.');
+      alert('Erreur lors de la sauvegarde : ' + (err as Error).message);
     } finally {
       setSaving(false);
     }
@@ -267,7 +292,7 @@ export default function InvitationStudio({
                 required
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                placeholder="Ex: Action auprès des opérateurs économiques..."
+                placeholder="Ex: Forum National pour l'Emploi et l'Insertion 2026"
                 className="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 text-slate-900 font-bold"
               />
             </div>
@@ -284,7 +309,7 @@ export default function InvitationStudio({
                     required
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
-                    placeholder="ogooue-maritime-2026"
+                    placeholder="forum-national-emploi-2026"
                     className="w-full pl-9 pr-3 py-2 text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl text-indigo-700"
                   />
                 </div>
@@ -313,6 +338,7 @@ export default function InvitationStudio({
                 rows={3}
                 value={introMessage}
                 onChange={(e) => setIntroMessage(e.target.value)}
+                placeholder="Ex: La Direction Générale du PNPE invite l'ensemble des dirigeants et acteurs économiques..."
                 className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 leading-relaxed focus:bg-white focus:outline-none"
               />
             </div>
@@ -459,7 +485,21 @@ export default function InvitationStudio({
                       type="text"
                       value={v.title}
                       onChange={(e) => handleUpdateVolet(idx, 'title', e.target.value)}
+                      placeholder="Ex: Présentation des opportunités de recrutement et d'investissement"
                       className="w-full p-2 bg-white border border-slate-200 rounded-xl font-bold text-slate-900"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                      Description / Objectifs du rendez-vous
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={v.description}
+                      onChange={(e) => handleUpdateVolet(idx, 'description', e.target.value)}
+                      placeholder="Ex: Détails des objectifs, opportunités et modalités de participation..."
+                      className="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                     />
                   </div>
 
@@ -472,6 +512,7 @@ export default function InvitationStudio({
                         type="text"
                         value={v.date}
                         onChange={(e) => handleUpdateVolet(idx, 'date', e.target.value)}
+                        placeholder="Ex: Vendredi 24 octobre 2026"
                         className="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium"
                       />
                     </div>
@@ -483,6 +524,7 @@ export default function InvitationStudio({
                         type="text"
                         value={v.time}
                         onChange={(e) => handleUpdateVolet(idx, 'time', e.target.value)}
+                        placeholder="Ex: À 10h00"
                         className="w-full p-2 bg-white border border-slate-200 rounded-xl font-medium"
                       />
                     </div>
@@ -497,6 +539,7 @@ export default function InvitationStudio({
                         type="text"
                         value={v.location}
                         onChange={(e) => handleUpdateVolet(idx, 'location', e.target.value)}
+                        placeholder="Ex: Siège du PNPE, Libreville"
                         className="w-full p-2 bg-white border border-slate-200 rounded-xl"
                       />
                     </div>
@@ -543,8 +586,14 @@ export default function InvitationStudio({
             )}
 
             <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
-              {title}
+              {title || "Titre de votre invitation..."}
             </h3>
+
+            {introMessage && (
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {introMessage}
+              </p>
+            )}
 
             <div className="space-y-3">
               {volets.map((v) => (

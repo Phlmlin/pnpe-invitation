@@ -173,13 +173,14 @@ export const store = {
   },
 
   async getInvitationBySlug(slug: string): Promise<Invitation | null> {
+    const cleanSlug = decodeURIComponent(slug).trim().toLowerCase();
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
         const { data, error } = await supabase
           .from('invitations')
           .select('*')
-          .eq('slug', slug)
+          .ilike('slug', cleanSlug)
           .maybeSingle();
 
         if (!error && data) {
@@ -191,7 +192,7 @@ export const store = {
     }
 
     const list = await this.getInvitations();
-    const found = list.find((inv) => inv.slug.toLowerCase() === slug.toLowerCase());
+    const found = list.find((inv) => inv.slug.toLowerCase() === cleanSlug);
     return found || null;
   },
 
@@ -222,22 +223,34 @@ export const store = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        await supabase.from('invitations').upsert(invitation);
+        const { error } = await supabase.from('invitations').upsert(invitation, { onConflict: 'id' });
+        if (error) {
+          console.error('Erreur sauvegarde Supabase saveInvitation:', error);
+          if (error.code === '23505' && error.message.includes('slug')) {
+            invitation.slug = `${invitation.slug}-${Math.floor(100 + Math.random() * 900)}`;
+            const { error: errRetry } = await supabase.from('invitations').upsert(invitation, { onConflict: 'id' });
+            if (errRetry) console.error('Erreur retry saveInvitation:', errRetry);
+          }
+        }
       } catch (err) {
         console.warn('Erreur sauvegarde Supabase saveInvitation:', err);
       }
     }
 
     if (isClient()) {
-      initLocalStorage();
-      const current = await this.getInvitations();
-      const index = current.findIndex((i) => i.id === invitation.id);
-      if (index >= 0) {
-        current[index] = { ...invitation, updatedAt: new Date().toISOString() };
-      } else {
-        current.unshift({ ...invitation, updatedAt: new Date().toISOString() });
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_INVITATIONS);
+        const current: Invitation[] = raw ? JSON.parse(raw) : [];
+        const index = current.findIndex((i) => i.id === invitation.id);
+        if (index >= 0) {
+          current[index] = { ...invitation, updatedAt: new Date().toISOString() };
+        } else {
+          current.unshift({ ...invitation, updatedAt: new Date().toISOString() });
+        }
+        localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(current));
+      } catch (e) {
+        console.warn('Erreur sauvegarde localStorage saveInvitation:', e);
       }
-      localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(current));
       notifyUpdate();
     } else {
       const idx = memoryState.invitations.findIndex((i) => i.id === invitation.id);
