@@ -34,5 +34,7 @@ Thumbs.db
 *.swp
 *.swo
 
-# Vercel
+# Vercel & Cloudflare
 .vercel
+.open-next/
+.wrangler/
