@@ -373,9 +373,9 @@ export default function InvitePage({ params }: InvitePageProps) {
         </div>
       ) : (
         // PAGE D'INVITATION & D'INSCRIPTION PRINCIPALE
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-8 flex-1">
+        <div className="max-w-5xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full space-y-8 flex-1">
           {/* 1. EN-TÊTE DYNAMIQUE */}
-          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-modern text-left space-y-3 relative overflow-hidden">
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern text-left space-y-3 relative overflow-hidden">
             {/* Liseré supérieur Gabon */}
             <div className="absolute top-0 left-0 right-0 h-2 flex">
               <div className="w-1/3 h-full bg-[#009E60]" />
@@ -390,13 +390,13 @@ export default function InvitePage({ params }: InvitePageProps) {
             </div>
 
             {/* Titre Principal de l'Invitation */}
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight leading-snug">
               {invitation.title}
             </h1>
 
             {/* Message d'introduction si renseigné */}
             {invitation.introMessage && (
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed pt-1">
+              <p className="text-xs sm:text-sm lg:text-base text-slate-600 leading-relaxed pt-1">
                 {invitation.introMessage}
               </p>
             )}
@@ -409,18 +409,18 @@ export default function InvitePage({ params }: InvitePageProps) {
           </div>
 
           {/* 2. SÉLECTION DES ACTIVITÉS */}
-          <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 shadow-modern space-y-5">
+          <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider mb-2">
                 <span>Étape 1 sur 2</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
                 Veuillez sélectionner l’activité qui vous intéresse
               </h2>
             </div>
 
-            {/* Liste des Activités avec image dédiée à côté */}
-            <div className="space-y-4 pt-1">
+            {/* Liste des Activités avec image dédiée bien visible à côté */}
+            <div className="space-y-6 pt-1">
               {invitation.volets.map((volet) => (
                 <VoletCard
                   key={volet.id}
@@ -739,7 +739,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md bg-gradient-to-r from-blue-600 via-indigo-600 to-emerald-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-indigo-600/25 hover:scale-[1.01] cursor-pointer"
+                  className="w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-md bg-black text-white hover:bg-emerald-600 shadow-black/20 hover:shadow-emerald-600/30 hover:scale-[1.01] cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
