@@ -20,7 +20,8 @@ import {
   TrendingUp,
   ArrowUpRight,
   Clock,
-  MoreVertical
+  MoreVertical,
+  Trash2
 } from 'lucide-react';
 import { store } from '@/lib/store';
 import { Invitation } from '@/lib/types';
@@ -30,6 +31,7 @@ export default function AdminDashboardPage() {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [statsMap, setStatsMap] = useState<Record<string, { total: number; v1: number; v2: number; both: number; attendees: number }>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deletedToast, setDeletedToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,6 +57,24 @@ export default function AdminDashboardPage() {
     loadData();
     return store.subscribe(loadData);
   }, []);
+
+  const handleDeleteInvitation = async (id: string, title: string) => {
+    if (
+      window.confirm(
+        `Êtes-vous sûr de vouloir supprimer définitivement l'invitation "${title}" ?\n\nToutes les inscriptions associées seront également supprimées de la base de données.`
+      )
+    ) {
+      try {
+        await store.deleteInvitation(id);
+        setInvitations((prev) => prev.filter((i) => i.id !== id));
+        setDeletedToast(title);
+        setTimeout(() => setDeletedToast(null), 3500);
+      } catch (err) {
+        console.error(err);
+        alert('Erreur lors de la suppression de l\'invitation.');
+      }
+    }
+  };
 
   const handleCopyLink = (slug: string, id: string) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -180,7 +200,7 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* NOTIFICATION TOAST FLOTTANTE */}
+        {/* NOTIFICATION TOAST FLOTTANTE (COPIE) */}
         {copiedId && (
           <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-emerald-500/40 animate-in fade-in slide-in-from-bottom-4 duration-200">
             <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white flex-shrink-0">
@@ -189,6 +209,19 @@ export default function AdminDashboardPage() {
             <div>
               <p className="font-bold text-xs">Lien copié dans le presse-papier !</p>
               <p className="text-[11px] text-slate-300">Prêt à être collé dans WhatsApp, SMS ou vos e-mails.</p>
+            </div>
+          </div>
+        )}
+
+        {/* NOTIFICATION TOAST FLOTTANTE (SUPPRESSION) */}
+        {deletedToast && (
+          <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-rose-500/40 animate-in fade-in slide-in-from-bottom-4 duration-200">
+            <div className="w-7 h-7 rounded-full bg-rose-500 flex items-center justify-center text-white flex-shrink-0">
+              <Trash2 className="w-4 h-4 stroke-[2]" />
+            </div>
+            <div>
+              <p className="font-bold text-xs">Invitation supprimée</p>
+              <p className="text-[11px] text-slate-300">L'invitation a été définitivement supprimée.</p>
             </div>
           </div>
         )}
@@ -330,6 +363,16 @@ export default function AdminDashboardPage() {
                         <Edit className="w-3.5 h-3.5" />
                         <span>Modifier</span>
                       </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteInvitation(inv.id, inv.title)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-700 hover:border-rose-200 border border-transparent text-xs font-semibold transition-all cursor-pointer"
+                        title="Supprimer définitivement cette invitation"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                        <span className="hidden sm:inline">Supprimer</span>
+                      </button>
                     </div>
 
                   </div>

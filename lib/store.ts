@@ -265,9 +265,15 @@ export const store = {
       const current = await this.getInvitations();
       const filtered = current.filter((i) => i.id !== id);
       localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(filtered));
+
+      const rsvps = await this.getRSVPs();
+      const filteredRsvps = rsvps.filter((r) => r.invitationId !== id);
+      localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(filteredRsvps));
+
       notifyUpdate();
     } else {
       memoryState.invitations = memoryState.invitations.filter((i) => i.id !== id);
+      memoryState.rsvps = memoryState.rsvps.filter((r) => r.invitationId !== id);
     }
   },
 

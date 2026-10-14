@@ -174,6 +174,25 @@ export default function InvitationStudio({
     }
   };
 
+  const handleDelete = async () => {
+    if (!initialInvitation) return;
+    if (
+      window.confirm(
+        `Êtes-vous sûr de vouloir supprimer définitivement cette invitation "${initialInvitation.title}" ?\n\nToutes les inscriptions associées seront également supprimées.`
+      )
+    ) {
+      setSaving(true);
+      try {
+        await store.deleteInvitation(initialInvitation.id);
+        router.push('/admin');
+      } catch (err) {
+        console.error(err);
+        alert('Erreur lors de la suppression de l\'invitation.');
+        setSaving(false);
+      }
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 w-full flex-1">
       {/* Barre d'action */}
@@ -202,10 +221,23 @@ export default function InvitationStudio({
             </span>
           )}
 
+          {isEditing && initialInvitation && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold uppercase tracking-wider transition-colors border border-rose-200 cursor-pointer"
+              title="Supprimer définitivement cette invitation"
+            >
+              <Trash2 className="w-4 h-4 text-rose-600" />
+              <span>Supprimer</span>
+            </button>
+          )}
+
           <button
             onClick={handleSave}
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 cursor-pointer"
           >
             <Save className="w-4 h-4 text-amber-300" />
             <span>{saving ? 'Enregistrement...' : 'Enregistrer et Partager'}</span>
