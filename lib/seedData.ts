@@ -38,7 +38,7 @@ export const DEFAULT_OFFICIAL_FLYER = `data:image/svg+xml;utf8,${encodeURICompon
   <text x="400" y="186" text-anchor="middle" fill="#FFFFFF" font-family="'Helvetica Neue', sans-serif" font-size="14" font-weight="800" letter-spacing="2">PNPE</text>
 
   <text x="400" y="240" text-anchor="middle" fill="#38BDF8" font-family="'Helvetica Neue', sans-serif" font-size="13" font-weight="600" letter-spacing="3">PÔLE NATIONAL DE PROMOTION DE L'EMPLOI</text>
-  <text x="400" y="262" text-anchor="middle" fill="#CBD5E1" font-family="'Times New Roman', serif" font-style="italic" font-size="16">Direction Provinciale de l'Ogooué-Maritime</text>
+  <text x="400" y="262" text-anchor="middle" fill="#CBD5E1" font-family="'Times New Roman', serif" font-style="italic" font-size="16">Direction Générale</text>
 
   <!-- Titre Principal de l'Affiche -->
   <text x="400" y="330" text-anchor="middle" fill="#FFFFFF" font-family="'Times New Roman', serif" font-size="30" font-weight="bold">INVITATION OFFICIELLE</text>

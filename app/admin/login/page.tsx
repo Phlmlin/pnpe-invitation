@@ -31,7 +31,6 @@ export default function AdminLoginPage() {
     <div className="flex-1 flex flex-col justify-between bg-slate-50 relative overflow-hidden">
       <OfficialHeader
         organization="PÔLE NATIONAL DE PROMOTION DE L'EMPLOI (PNPE)"
-        subtitle="Espace Sécurisé d'Administration & Gestion des Invitations"
       />
 
       <div className="max-w-md mx-auto px-4 py-12 sm:py-16 w-full">

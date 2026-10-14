@@ -167,7 +167,6 @@ export default function InvitePage({ params }: InvitePageProps) {
     <div className="flex-1 flex flex-col bg-slate-50 relative">
       <OfficialHeader
         organization={invitation.organization}
-        subtitle="Direction Provinciale de l'Ogooué-Maritime • Port-Gentil"
       />
 
       {confirmedRSVP ? (

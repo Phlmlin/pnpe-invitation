@@ -7,7 +7,7 @@ interface OfficialHeaderProps {
 
 export default function OfficialHeader({
   organization = "PÔLE NATIONAL DE PROMOTION DE L'EMPLOI (PNPE)",
-  subtitle = "Direction Provinciale de l'Ogooué-Maritime • Port-Gentil"
+  subtitle
 }: OfficialHeaderProps) {
   return (
     <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
@@ -34,9 +34,11 @@ export default function OfficialHeader({
           </div>
         </div>
 
-        <div className="text-xs text-slate-600 font-medium bg-slate-100/90 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs">
-          {subtitle}
-        </div>
+        {subtitle && (
+          <div className="text-xs text-slate-600 font-medium bg-slate-100/90 px-3.5 py-1.5 rounded-full border border-slate-200 shadow-2xs">
+            {subtitle}
+          </div>
+        )}
       </div>
     </header>
   );
