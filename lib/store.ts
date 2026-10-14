@@ -87,6 +87,19 @@ function notifyUpdate() {
   }
 }
 
+function normalizeInvitationVolets(inv: Invitation): Invitation {
+  if (!inv || !Array.isArray(inv.volets)) return inv;
+  return {
+    ...inv,
+    volets: inv.volets.map((v, idx) => ({
+      ...v,
+      badge: v.badge
+        ? v.badge.replace(/^volet\s*(\d+)/i, 'Activité $1').replace(/volet/gi, 'Activité')
+        : `Activité ${idx + 1}`,
+    })),
+  };
+}
+
 export const store = {
   isSupabaseConfigured(): boolean {
     return !!getSupabaseClient();
@@ -156,19 +169,22 @@ export const store = {
           .order('createdAt', { ascending: false });
 
         if (!error && data) {
-          return data as Invitation[];
+          return (data as Invitation[]).map(normalizeInvitationVolets);
         }
       } catch (err) {
         console.warn('Fallback local après erreur Supabase getInvitations:', err);
       }
     }
 
-    if (!isClient()) return memoryState.invitations;
+    if (!isClient()) return memoryState.invitations.map(normalizeInvitationVolets);
     initLocalStorage();
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY_INVITATIONS);
-      if (raw !== null) return JSON.parse(raw);
+      if (raw !== null) {
+        const parsed: Invitation[] = JSON.parse(raw);
+        return parsed.map(normalizeInvitationVolets);
+      }
     } catch {
       // fallback
     }
@@ -187,7 +203,7 @@ export const store = {
           .maybeSingle();
 
         if (!error && data) {
-          return data as Invitation;
+          return normalizeInvitationVolets(data as Invitation);
         }
       } catch (err) {
         console.warn('Erreur Supabase getInvitationBySlug:', err);
@@ -196,7 +212,7 @@ export const store = {
 
     const list = await this.getInvitations();
     const found = list.find((inv) => inv.slug.toLowerCase() === cleanSlug);
-    return found || null;
+    return found ? normalizeInvitationVolets(found) : null;
   },
 
   async getInvitationById(id: string): Promise<Invitation | null> {
@@ -210,7 +226,7 @@ export const store = {
           .maybeSingle();
 
         if (!error && data) {
-          return data as Invitation;
+          return normalizeInvitationVolets(data as Invitation);
         }
       } catch (err) {
         console.warn('Erreur Supabase getInvitationById:', err);
@@ -219,19 +235,20 @@ export const store = {
 
     const list = await this.getInvitations();
     const found = list.find((inv) => inv.id === id);
-    return found || null;
+    return found ? normalizeInvitationVolets(found) : null;
   },
 
   async saveInvitation(invitation: Invitation): Promise<Invitation> {
+    const normalizedInvitation = normalizeInvitationVolets(invitation);
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        const { error } = await supabase.from('invitations').upsert(invitation, { onConflict: 'id' });
+        const { error } = await supabase.from('invitations').upsert(normalizedInvitation, { onConflict: 'id' });
         if (error) {
           console.error('Erreur sauvegarde Supabase saveInvitation:', error);
           if (error.code === '23505' && error.message.includes('slug')) {
-            invitation.slug = `${invitation.slug}-${Math.floor(100 + Math.random() * 900)}`;
-            const { error: errRetry } = await supabase.from('invitations').upsert(invitation, { onConflict: 'id' });
+            normalizedInvitation.slug = `${normalizedInvitation.slug}-${Math.floor(100 + Math.random() * 900)}`;
+            const { error: errRetry } = await supabase.from('invitations').upsert(normalizedInvitation, { onConflict: 'id' });
             if (errRetry) console.error('Erreur retry saveInvitation:', errRetry);
           }
         }
@@ -244,11 +261,11 @@ export const store = {
       try {
         const raw = localStorage.getItem(STORAGE_KEY_INVITATIONS);
         const current: Invitation[] = raw ? JSON.parse(raw) : [];
-        const index = current.findIndex((i) => i.id === invitation.id);
+        const index = current.findIndex((i) => i.id === normalizedInvitation.id);
         if (index >= 0) {
-          current[index] = { ...invitation, updatedAt: new Date().toISOString() };
+          current[index] = { ...normalizedInvitation, updatedAt: new Date().toISOString() };
         } else {
-          current.unshift({ ...invitation, updatedAt: new Date().toISOString() });
+          current.unshift({ ...normalizedInvitation, updatedAt: new Date().toISOString() });
         }
         localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify(current));
       } catch (e) {
@@ -256,12 +273,12 @@ export const store = {
       }
       notifyUpdate();
     } else {
-      const idx = memoryState.invitations.findIndex((i) => i.id === invitation.id);
-      if (idx >= 0) memoryState.invitations[idx] = invitation;
-      else memoryState.invitations.unshift(invitation);
+      const idx = memoryState.invitations.findIndex((i) => i.id === normalizedInvitation.id);
+      if (idx >= 0) memoryState.invitations[idx] = normalizedInvitation;
+      else memoryState.invitations.unshift(normalizedInvitation);
     }
 
-    return invitation;
+    return normalizedInvitation;
   },
 
   async deleteInvitation(id: string): Promise<void> {

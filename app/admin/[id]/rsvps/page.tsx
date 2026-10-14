@@ -231,7 +231,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-blue-50/90 to-indigo-50/60 border border-blue-200/80 shadow-modern">
             <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block mb-1">
-              Volet 1 (Ven. 16/10)
+              Activité 1 (Ven. 16/10)
             </span>
             <p className="text-3xl font-extrabold text-blue-900 tabular-nums">
               {countVolet1}
@@ -243,7 +243,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/80 shadow-modern">
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-              Volet 2 (Sam. 17/10)
+              Activité 2 (Sam. 17/10)
             </span>
             <p className="text-3xl font-extrabold text-emerald-900 tabular-nums">
               {countVolet2}
@@ -255,7 +255,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/80 shadow-modern">
             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
-              Les Deux Volets
+              Toutes les Activités
             </span>
             <p className="text-3xl font-extrabold text-amber-900 tabular-nums">
               {countBoth}
@@ -288,7 +288,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                   : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
               }`}
             >
-              Volet 1 ({countVolet1})
+              Activité 1 ({countVolet1})
             </button>
 
             <button
@@ -299,7 +299,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                   : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
               }`}
             >
-              Volet 2 ({countVolet2})
+              Activité 2 ({countVolet2})
             </button>
 
             <button
@@ -310,7 +310,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                   : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
               }`}
             >
-              Les 2 Volets ({countBoth})
+              Les 2 Activités ({countBoth})
             </button>
           </div>
 
@@ -392,12 +392,12 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                         <div className="flex flex-col gap-1">
                           {r.volets.includes('volet-1') && (
                             <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                              Volet 1 (Ven. 16)
+                              Activité 1 (Ven. 16)
                             </span>
                           )}
                           {r.volets.includes('volet-2') && (
                             <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Volet 2 (Sam. 17)
+                              Activité 2 (Sam. 17)
                             </span>
                           )}
                         </div>

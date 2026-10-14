@@ -313,27 +313,27 @@ export default function GlobalRSVPsPage() {
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-blue-50/90 to-indigo-50/60 border border-blue-200/80 shadow-modern">
             <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block mb-1">
-              Volet 1
+              Activité 1
             </span>
             <p className="text-3xl font-extrabold text-blue-900 tabular-nums">
               {countVolet1}
             </p>
-            <p className="text-xs text-blue-700 mt-1 font-medium">Inscrits Volet 1</p>
+            <p className="text-xs text-blue-700 mt-1 font-medium">Inscrits Activité 1</p>
           </div>
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/80 shadow-modern">
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-              Volet 2
+              Activité 2
             </span>
             <p className="text-3xl font-extrabold text-emerald-900 tabular-nums">
               {countVolet2}
             </p>
-            <p className="text-xs text-emerald-700 mt-1 font-medium">Inscrits Volet 2</p>
+            <p className="text-xs text-emerald-700 mt-1 font-medium">Inscrits Activité 2</p>
           </div>
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/80 shadow-modern">
             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
-              Les Deux Volets
+              Toutes les Activités
             </span>
             <p className="text-3xl font-extrabold text-amber-900 tabular-nums">
               {countBoth}
@@ -363,7 +363,7 @@ export default function GlobalRSVPsPage() {
                   : 'text-blue-700 hover:bg-blue-50'
               }`}
             >
-              Volet 1 ({countVolet1})
+              Activité 1 ({countVolet1})
             </button>
             <button
               onClick={() => setFilterTab('volet-2')}
@@ -373,7 +373,7 @@ export default function GlobalRSVPsPage() {
                   : 'text-emerald-700 hover:bg-emerald-50'
               }`}
             >
-              Volet 2 ({countVolet2})
+              Activité 2 ({countVolet2})
             </button>
             <button
               onClick={() => setFilterTab('both')}
@@ -464,12 +464,12 @@ export default function GlobalRSVPsPage() {
                           <div className="flex flex-wrap gap-1.5">
                             {hasV1 && (
                               <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                Volet 1
+                                Activité 1
                               </span>
                             )}
                             {hasV2 && (
                               <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Volet 2
+                                Activité 2
                               </span>
                             )}
                           </div>

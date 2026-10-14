@@ -226,6 +226,11 @@ export default function InvitePage({ params }: InvitePageProps) {
     await executeRegistration(selectedVolets);
   };
 
+  const formatActivityBadge = (badge?: string, fallbackId?: string) => {
+    if (!badge) return fallbackId === 'volet-2' ? 'Activité 2' : 'Activité 1';
+    return badge.replace(/^volet\s*(\d+)/i, 'Activité $1').replace(/volet/gi, 'Activité');
+  };
+
   const singleVolet =
     invitation && selectedVolets.length === 1
       ? invitation.volets.find((v) => v.id === selectedVolets[0])
@@ -327,7 +332,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                               v.theme === 'blue' ? 'bg-indigo-700' : 'bg-emerald-700'
                             }`}
                           >
-                            {v.badge}
+                            {formatActivityBadge(v.badge, v.id)}
                           </span>
                           <span className="text-xs font-bold text-slate-800 truncate">
                             {v.title}
@@ -770,11 +775,11 @@ export default function InvitePage({ params }: InvitePageProps) {
             </h3>
 
             <p className="text-sm text-slate-700 mt-3 leading-relaxed">
-              Vous avez sélectionné uniquement le <strong className="text-indigo-950 font-bold">{singleVolet.badge}</strong> ({singleVolet.title}).
+              Vous avez sélectionné uniquement l'<strong className="text-indigo-950 font-bold">{formatActivityBadge(singleVolet.badge, singleVolet.id)}</strong> ({singleVolet.title}).
             </p>
 
             <p className="text-sm text-slate-700 mt-2 leading-relaxed">
-              Souhaitez-vous confirmer votre inscription à cette seule activité ou souhaitez-vous également participer au <strong className="text-indigo-950 font-bold">{missingVolet.badge}</strong> ({missingVolet.title}) ?
+              Souhaitez-vous confirmer votre inscription à cette seule activité ou souhaitez-vous également participer à l'<strong className="text-indigo-950 font-bold">{formatActivityBadge(missingVolet.badge, missingVolet.id)}</strong> ({missingVolet.title}) ?
             </p>
 
             <div className="mt-6 flex flex-col gap-3">
@@ -790,7 +795,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                 className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/25 transition-all cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Ajouter le {missingVolet.badge} à mon inscription</span>
+                <span>Ajouter l'{formatActivityBadge(missingVolet.badge, missingVolet.id)} à mon inscription</span>
               </button>
 
               {/* Choix 1 : Confirmer cette seule activité */}
@@ -800,7 +805,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                 disabled={isSubmitting}
                 className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors border border-slate-200 cursor-pointer"
               >
-                <span>Confirmer mon inscription au {singleVolet.badge} uniquement</span>
+                <span>Confirmer mon inscription à l'{formatActivityBadge(singleVolet.badge, singleVolet.id)} uniquement</span>
               </button>
 
               <button

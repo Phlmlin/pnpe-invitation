@@ -21,6 +21,11 @@ export default function VoletCard({
   const isBlue = volet.theme === 'blue';
   const [isZoomOpen, setIsZoomOpen] = useState(false);
 
+  const rawBadge = volet.badge || '';
+  const displayBadge = rawBadge
+    .replace(/^volet\s*(\d+)/i, 'Activité $1')
+    .replace(/volet/gi, 'Activité') || (volet.id === 'volet-2' ? 'Activité 2' : 'Activité 1');
+
   return (
     <>
       <div
@@ -50,7 +55,7 @@ export default function VoletCard({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={volet.imageUrl}
-                alt={volet.title || volet.badge}
+                alt={volet.title || displayBadge}
                 className="w-full h-36 sm:h-full sm:max-h-52 object-cover transition-transform duration-300 group-hover/img:scale-105"
               />
               <button
@@ -79,7 +84,7 @@ export default function VoletCard({
                       : 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-emerald-500/20'
                   }`}
                 >
-                  <span>{volet.badge}</span>
+                  <span>{displayBadge}</span>
                 </span>
 
                 <span className="font-mono text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200">
@@ -186,7 +191,7 @@ export default function VoletCard({
           isOpen={isZoomOpen}
           imageUrl={volet.imageUrl}
           onClose={() => setIsZoomOpen(false)}
-          title={`Visuel : ${volet.title || volet.badge}`}
+          title={`Visuel : ${volet.title || displayBadge}`}
         />
       )}
     </>

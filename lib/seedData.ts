@@ -46,11 +46,11 @@ export const DEFAULT_OFFICIAL_FLYER = `data:image/svg+xml;utf8,${encodeURICompon
 
   <line x1="120" y1="395" x2="680" y2="395" stroke="#334155" stroke-width="1"/>
 
-  <!-- Encadré Volet 1 -->
+  <!-- Encadré Activité 1 -->
   <rect x="70" y="425" width="660" height="190" rx="4" fill="#0F2744" stroke="#1E3A8A" stroke-width="1.5"/>
-  <rect x="90" y="445" width="90" height="24" rx="2" fill="#1E3A8A"/>
-  <text x="135" y="461" text-anchor="middle" fill="#FFFFFF" font-family="'Helvetica Neue', sans-serif" font-size="11" font-weight="700" letter-spacing="1">VOLET 1</text>
-  <text x="195" y="462" fill="#FCD116" font-family="'Courier New', monospace" font-size="12" font-weight="bold">VENDREDI 16 OCTOBRE 2026 • 10H00</text>
+  <rect x="90" y="445" width="105" height="24" rx="2" fill="#1E3A8A"/>
+  <text x="142" y="461" text-anchor="middle" fill="#FFFFFF" font-family="'Helvetica Neue', sans-serif" font-size="11" font-weight="700" letter-spacing="1">ACTIVITÉ 1</text>
+  <text x="210" y="462" fill="#FCD116" font-family="'Courier New', monospace" font-size="12" font-weight="bold">VENDREDI 16 OCTOBRE 2026 • 10H00</text>
   
   <text x="90" y="505" fill="#FFFFFF" font-family="'Times New Roman', serif" font-size="18" font-weight="bold">Présentation des Journées Économiques</text>
   <text x="90" y="528" fill="#93C5FD" font-family="'Times New Roman', serif" font-size="16">&amp; Forum International de l'Emploi</text>
@@ -59,11 +59,11 @@ export const DEFAULT_OFFICIAL_FLYER = `data:image/svg+xml;utf8,${encodeURICompon
   <circle cx="98" cy="585" r="4" fill="#009E60"/>
   <text x="110" y="589" fill="#E2E8F0" font-family="'Helvetica Neue', sans-serif" font-size="12" font-weight="600">Lieu : Centre Culturel Total • Port-Gentil</text>
 
-  <!-- Encadré Volet 2 -->
+  <!-- Encadré Activité 2 -->
   <rect x="70" y="640" width="660" height="190" rx="4" fill="#064E3B" fill-opacity="0.25" stroke="#065F46" stroke-width="1.5"/>
-  <rect x="90" y="660" width="90" height="24" rx="2" fill="#065F46"/>
-  <text x="135" y="676" text-anchor="middle" fill="#FFFFFF" font-family="'Helvetica Neue', sans-serif" font-size="11" font-weight="700" letter-spacing="1">VOLET 2</text>
-  <text x="195" y="677" fill="#6EE7B7" font-family="'Courier New', monospace" font-size="12" font-weight="bold">SAMEDI 17 OCTOBRE 2026 • 09H À 17H</text>
+  <rect x="90" y="660" width="105" height="24" rx="2" fill="#065F46"/>
+  <text x="142" y="676" text-anchor="middle" fill="#FFFFFF" font-family="'Helvetica Neue', sans-serif" font-size="11" font-weight="700" letter-spacing="1">ACTIVITÉ 2</text>
+  <text x="210" y="677" fill="#6EE7B7" font-family="'Courier New', monospace" font-size="12" font-weight="bold">SAMEDI 17 OCTOBRE 2026 • 09H À 17H</text>
 
   <text x="90" y="720" fill="#FFFFFF" font-family="'Times New Roman', serif" font-size="22" font-weight="bold">Mini-Salon de l'Emploi &amp; Recrutement Direct</text>
   <text x="90" y="748" fill="#A7F3D0" font-family="'Helvetica Neue', sans-serif" font-size="13">Rencontres B2B, espaces stands partenaires et entretiens de recrutement</text>
@@ -90,7 +90,7 @@ export const DEFAULT_INVITATION: Invitation = {
   volets: [
     {
       id: "volet-1",
-      badge: "Volet 1",
+      badge: "Activité 1",
       theme: "blue",
       title: "Présentation des Journées Économiques et du Forum International de l'Emploi (27 et 28 novembre 2026 à Paris)",
       date: "Vendredi 16 octobre 2026",
@@ -101,7 +101,7 @@ export const DEFAULT_INVITATION: Invitation = {
     },
     {
       id: "volet-2",
-      badge: "Volet 2",
+      badge: "Activité 2",
       theme: "emerald",
       title: "Mini-salon de l'emploi",
       date: "Samedi 17 octobre 2026",

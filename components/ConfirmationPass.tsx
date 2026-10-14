@@ -190,12 +190,15 @@ export default function ConfirmationPass({
             <div>
               <h3 className="text-xs font-bold tracking-wider text-slate-500 uppercase mb-3 flex items-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                <span>SÉQUENCES RETENUES ({selectedVolets.length})</span>
+                <span>ACTIVITÉS RETENUES ({selectedVolets.length})</span>
               </h3>
 
               <div className="space-y-3">
                 {selectedVolets.map((v) => {
                   const isBlue = v.theme === 'blue';
+                  const displayBadge = (v.badge || '')
+                    .replace(/^volet\s*(\d+)/i, 'Activité $1')
+                    .replace(/volet/gi, 'Activité') || (v.id === 'volet-2' ? 'Activité 2' : 'Activité 1');
                   return (
                     <div
                       key={v.id}
@@ -211,7 +214,7 @@ export default function ConfirmationPass({
                             isBlue ? 'bg-blue-600' : 'bg-emerald-600'
                           }`}
                         >
-                          {v.badge}
+                          {displayBadge}
                         </span>
                         <span className="font-mono text-xs font-bold text-slate-700">
                           {v.date} • {v.time}

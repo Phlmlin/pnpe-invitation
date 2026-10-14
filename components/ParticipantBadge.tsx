@@ -266,15 +266,18 @@ export default function ParticipantBadge({
             {/* Séquences / Volets Retenus (Ultra lisibles, sans troncature, bordures d'accent) */}
             <div className="w-full space-y-1 text-left">
               <div className="flex items-center justify-between text-[8px] font-bold uppercase tracking-wider text-slate-400">
-                <span>SÉQUENCES RETENUES</span>
+                <span>ACTIVITÉS RETENUES</span>
                 <span className="text-slate-600 font-extrabold">
-                  {selectedVolets.length} volet(s) validé(s)
+                  {selectedVolets.length} activité(s) validée(s)
                 </span>
               </div>
 
               <div className="space-y-1">
                 {selectedVolets.map((v) => {
                   const isBlue = v.theme === 'blue';
+                  const displayBadge = (v.badge || '')
+                    .replace(/^volet\s*(\d+)/i, 'Activité $1')
+                    .replace(/volet/gi, 'Activité') || (v.id === 'volet-2' ? 'Activité 2' : 'Activité 1');
                   return (
                     <div
                       key={v.id}
@@ -292,7 +295,7 @@ export default function ParticipantBadge({
                             isBlue ? 'bg-blue-700' : 'bg-emerald-700'
                           }`}
                         >
-                          {v.badge}
+                          {displayBadge}
                         </span>
                         <span className="text-[9px] font-bold text-slate-700 text-right">
                           {v.date} • {v.time}
