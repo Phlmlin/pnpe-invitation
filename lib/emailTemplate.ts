@@ -38,9 +38,13 @@ export function generateHtmlEmail(invitation: Invitation, baseUrl: string): stri
                     <h3 style="margin:0 0 8px 0; font-family:Georgia, 'Times New Roman', serif; font-size:18px; line-height:24px; color:#0A192F;">
                       ${v.title}
                     </h3>
-                    <p style="margin:0 0 12px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:13px; line-height:19px; color:#475569;">
-                      ${v.description || ''}
-                    </p>
+                    ${
+                      v.description
+                        ? `<p style="margin:0 0 12px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:13px; line-height:19px; color:#475569;">
+                            ${v.description}
+                          </p>`
+                        : ''
+                    }
                   </td>
                 </tr>
                 <tr>
@@ -80,49 +84,18 @@ export function generateHtmlEmail(invitation: Invitation, baseUrl: string): stri
         <!-- Conteneur Carte Électronique -->
         <table width="640" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; width:100%; background-color:#FFFFFF; border:1px solid #E2E8F0; border-radius:6px; overflow:hidden;">
           
-          <!-- En-tête Institutionnel avec Logo PNPE -->
-          <tr>
-            <td style="padding:28px 32px 20px 32px; background-color:#0A192F; border-bottom:2px solid #FCD116; text-align:center;">
-              <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 12px auto;">
-                <tr>
-                  <td align="center" style="background-color:#FFFFFF; padding:6px; border-radius:12px;">
-                    <img src="${baseUrl.replace(/\/$/, '')}/logo-pnpe.png" alt="Logo PNPE" width="54" height="54" style="display:block; width:54px; height:auto; border:0;" />
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:0 0 4px 0; font-family:Georgia, serif; font-size:11px; letter-spacing:3px; color:#94A3B8; text-transform:uppercase;">
-                RÉPUBLIQUE GABONAISE
-              </p>
-              <h2 style="margin:0 0 6px 0; font-family:Georgia, serif; font-size:18px; font-weight:normal; letter-spacing:1px; color:#FFFFFF;">
-                ${invitation.organization}
-              </h2>
-              <p style="margin:0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:12px; color:#38BDF8; letter-spacing:1px; text-transform:uppercase;">
-                Invitation Officielle aux Opérateurs Économiques
-              </p>
-            </td>
-          </tr>
-
-          ${
-            invitation.imageUrl
-              ? `
-          <!-- Flyer / Visuel Officiel -->
-          <tr>
-            <td align="center" style="background-color:#050C17; padding:0; line-height:0;">
-              <img src="${invitation.imageUrl}" alt="Affiche officielle PNPE" style="display:block; width:100%; max-width:640px; height:auto; border:0;" />
-            </td>
-          </tr>
-          `
-              : ''
-          }
-
           <!-- Corps du message -->
           <tr>
-            <td style="padding:32px 32px 24px 32px;">
+            <td style="padding:32px 32px 28px 32px;">
+              <p style="margin:0 0 6px 0; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size:11px; font-weight:bold; letter-spacing:2px; color:#64748B; text-transform:uppercase;">
+                ${invitation.organization}
+              </p>
+
               <h1 style="margin:0 0 16px 0; font-family:Georgia, 'Times New Roman', serif; font-size:24px; line-height:32px; font-weight:normal; color:#0A192F;">
                 ${invitation.title}
               </h1>
 
-              <p style="margin:0 0 24px 0; font-size:14px; line-height:22px; color:#334155;">
+              <p style="margin:0 0 24px 0; font-size:14px; line-height:22px; color:#334155; white-space:pre-line;">
                 ${invitation.introMessage}
               </p>
 
@@ -130,7 +103,7 @@ export function generateHtmlEmail(invitation: Invitation, baseUrl: string): stri
               ${voletsHtml}
 
               <!-- Bouton d'action RSVP (Centré) -->
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px; margin-bottom:12px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px; margin-bottom:8px;">
                 <tr>
                   <td align="center">
                     <table cellpadding="0" cellspacing="0">
@@ -153,19 +126,6 @@ export function generateHtmlEmail(invitation: Invitation, baseUrl: string): stri
                 </tr>
               </table>
 
-            </td>
-          </tr>
-
-          <!-- Pied de page officiel -->
-          <tr>
-            <td style="padding:20px 32px; background-color:#F8FAFC; border-top:1px solid #E2E8F0; text-align:center;">
-              <p style="margin:0 0 6px 0; font-size:12px; font-weight:600; color:#334155;">
-                Pôle National de Promotion de l'Emploi (PNPE)
-              </p>
-              <p style="margin:0; font-size:11px; line-height:16px; color:#64748B;">
-                Cet e-mail est une communication officielle destinée aux entreprises et partenaires économiques.<br>
-                Pour toute demande d'information ou assistance : contact@pnpe.ga
-              </p>
             </td>
           </tr>
 
