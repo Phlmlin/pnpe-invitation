@@ -15,11 +15,15 @@ function isClient(): boolean {
   return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 }
 
+const DEFAULT_SUPABASE_URL = 'https://ovljxjkteqffjmwkiwln.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_oN6LgNmcr8mNBjlaD_wdyQ_tu6EFYjb';
+
 export function getSupabaseClient(): SupabaseClient | null {
-  let url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  let url = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
   let key =
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    DEFAULT_SUPABASE_ANON_KEY;
 
   if (isClient()) {
     try {
@@ -123,14 +127,13 @@ export const store = {
     }
     const envKey =
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL && envKey) {
-      return {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        key: envKey,
-      };
-    }
-    return null;
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      DEFAULT_SUPABASE_ANON_KEY;
+    const envUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+    return {
+      url: envUrl,
+      key: envKey,
+    };
   },
 
   clearSupabaseConfig(): void {
