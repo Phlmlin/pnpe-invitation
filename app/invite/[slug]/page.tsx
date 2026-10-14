@@ -3,11 +3,6 @@
 import React, { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import {
-  Building,
-  Building2,
-  GraduationCap,
-  User,
-  Briefcase,
   Phone,
   Mail,
   ArrowRight,
@@ -17,7 +12,6 @@ import {
   AlertCircle,
   HelpCircle,
   PlusCircle,
-  FileText,
   CheckCircle2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -33,8 +27,6 @@ interface InvitePageProps {
   }>;
 }
 
-type ParticipantProfile = 'company' | 'jobseeker';
-
 export default function InvitePage({ params }: InvitePageProps) {
   const resolvedParams = use(params);
   const slug = resolvedParams.slug;
@@ -45,23 +37,11 @@ export default function InvitePage({ params }: InvitePageProps) {
   const [confirmedRSVP, setConfirmedRSVP] = useState<RSVPRegistration | null>(null);
   const [isSingleVoletModalOpen, setIsSingleVoletModalOpen] = useState(false);
 
-  // Profil participant : Entreprise ou Demandeur d'emploi
-  const [participantType, setParticipantType] = useState<ParticipantProfile>('company');
-
-  // Champs Entreprise
-  const [company, setCompany] = useState('');
-  const [participantName, setParticipantName] = useState('');
-  const [jobTitle, setJobTitle] = useState('');
-  const [attendeesCount, setAttendeesCount] = useState<number>(1);
-  const [comments, setComments] = useState('');
-
   // Champs Demandeur d'emploi
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [pnpeNumber, setPnpeNumber] = useState('');
   const [profil, setProfil] = useState('');
-
-  // Champs Communs
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
@@ -134,29 +114,15 @@ export default function InvitePage({ params }: InvitePageProps) {
       const randomCode = Math.floor(1000 + Math.random() * 9000);
       const code = `PNPE-OG-${randomCode}`;
 
-      let finalParticipantName = '';
-      let finalCompany = '';
-      let finalJobTitle = '';
-      let finalAttendees = 1;
-      let finalComments: string | undefined = undefined;
-
-      if (participantType === 'jobseeker') {
-        finalParticipantName = `${nom.trim().toUpperCase()} ${prenom.trim()}`;
-        finalCompany = pnpeNumber.trim()
-          ? `Demandeur d'emploi (N° PNPE: ${pnpeNumber.trim()})`
-          : "Demandeur d'emploi";
-        finalJobTitle = profil.trim();
-        finalAttendees = 1;
-        finalComments = pnpeNumber.trim()
-          ? `Numéro PNPE : ${pnpeNumber.trim()}`
-          : undefined;
-      } else {
-        finalParticipantName = participantName.trim();
-        finalCompany = company.trim();
-        finalJobTitle = jobTitle.trim() || 'Représentant';
-        finalAttendees = Number(attendeesCount) || 1;
-        finalComments = comments.trim() || undefined;
-      }
+      const finalParticipantName = `${nom.trim().toUpperCase()} ${prenom.trim()}`;
+      const finalCompany = pnpeNumber.trim()
+        ? `Demandeur d'emploi (N° PNPE: ${pnpeNumber.trim()})`
+        : "Demandeur d'emploi";
+      const finalJobTitle = profil.trim();
+      const finalAttendees = 1;
+      const finalComments = pnpeNumber.trim()
+        ? `Numéro PNPE : ${pnpeNumber.trim()}`
+        : undefined;
 
       const newRSVP: RSVPRegistration = {
         id: `rsvp-${Date.now()}`,
@@ -166,7 +132,7 @@ export default function InvitePage({ params }: InvitePageProps) {
         participantName: finalParticipantName,
         jobTitle: finalJobTitle,
         phone: phone.trim() || 'Non renseigné',
-        email: email.trim().toLowerCase() || (participantType === 'jobseeker' ? 'non-renseigne@pnpe.ga' : ''),
+        email: email.trim().toLowerCase() || 'non-renseigne@pnpe.ga',
         volets: voletsToSave,
         attendeesCount: finalAttendees,
         comments: finalComments,
@@ -207,16 +173,9 @@ export default function InvitePage({ params }: InvitePageProps) {
       return;
     }
 
-    if (participantType === 'jobseeker') {
-      if (!nom.trim() || !prenom.trim() || !profil.trim()) {
-        setErrorMessage('Veuillez renseigner votre Nom, Prénom et Profil (*).');
-        return;
-      }
-    } else {
-      if (!company.trim() || !participantName.trim() || !jobTitle.trim() || !phone.trim() || !email.trim()) {
-        setErrorMessage('Veuillez remplir tous les champs obligatoires de l’entreprise (*).');
-        return;
-      }
+    if (!nom.trim() || !prenom.trim() || !profil.trim()) {
+      setErrorMessage('Veuillez renseigner votre Nom, Prénom et Profil (*).');
+      return;
     }
 
     // Si le participant a sélectionné 1 seule activité alors que l'invitation en compte plusieurs :
@@ -356,16 +315,12 @@ export default function InvitePage({ params }: InvitePageProps) {
                 type="button"
                 onClick={() => {
                   setConfirmedRSVP(null);
-                  setCompany('');
-                  setParticipantName('');
-                  setJobTitle('');
                   setNom('');
                   setPrenom('');
                   setPnpeNumber('');
                   setProfil('');
                   setPhone('');
                   setEmail('');
-                  setComments('');
                 }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer"
               >
@@ -467,158 +422,18 @@ export default function InvitePage({ params }: InvitePageProps) {
             </div>
           </div>
 
-          {/* 3. CHOIX DU PROFIL ET FORMULAIRES D'INSCRIPTION SÉPARÉS */}
-          <div className="space-y-6">
-            {/* CARTE DE SÉLECTION DU TYPE D'INSCRIPTION */}
-            <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern text-left space-y-4">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider mb-2">
-                  <span>Étape 2 sur 2</span>
-                </div>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
-                  Sélectionnez votre profil d'inscription
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Choisissez ci-dessous votre profil pour accéder à votre formulaire d'inscription dédié :
-                </p>
+          {/* 3. FORMULAIRE D'INSCRIPTION DES PARTICIPANTS */}
+          <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6 text-left">
+            <div className="space-y-2 pb-4 border-b border-slate-200/80">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider">
+                <span>Étape 2 sur 2</span>
               </div>
-
-              {/* Deux grandes cartes bien distinctes pour séparer Entreprise et Demandeur d'emploi */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 pt-2">
-                {/* CARTE 1 : PROFIL ENTREPRISE */}
-                <div
-                  onClick={() => {
-                    setParticipantType('company');
-                    setErrorMessage(null);
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === ' ' || e.key === 'Enter') {
-                      e.preventDefault();
-                      setParticipantType('company');
-                      setErrorMessage(null);
-                    }
-                  }}
-                  className={`p-6 rounded-3xl border-2 transition-all cursor-pointer text-left relative flex flex-col justify-between ${
-                    participantType === 'company'
-                      ? 'bg-gradient-to-br from-indigo-50/95 via-white to-blue-50/80 border-indigo-600 ring-4 ring-indigo-500/20 shadow-modern-lg scale-[1.01]'
-                      : 'bg-slate-50/90 hover:bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
-                          participantType === 'company'
-                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        <Building2 className="w-6 h-6" />
-                      </div>
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                          participantType === 'company'
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        Formulaire Entreprise
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-black text-slate-900">
-                      Entreprise &amp; Partenaire
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                      Réservé aux entreprises, sociétés, PME, institutions et opérateurs économiques (conférences, stands, recrutement).
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-3.5 border-t border-slate-200/80 flex items-center justify-between text-xs font-bold">
-                    <span className={participantType === 'company' ? 'text-indigo-700' : 'text-slate-500'}>
-                      {participantType === 'company' ? '● Formulaire Entreprise actif' : 'Cliquer pour remplir ce formulaire'}
-                    </span>
-                    <span
-                      className={`text-[11px] px-2.5 py-1 rounded-md font-mono font-bold ${
-                        participantType === 'company'
-                          ? 'bg-indigo-600 text-white shadow-xs'
-                          : 'bg-slate-200 text-slate-600'
-                      }`}
-                    >
-                      {participantType === 'company' ? 'Sélectionné' : 'Choisir'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* CARTE 2 : PROFIL DEMANDEUR D'EMPLOI */}
-                <div
-                  onClick={() => {
-                    setParticipantType('jobseeker');
-                    setErrorMessage(null);
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === ' ' || e.key === 'Enter') {
-                      e.preventDefault();
-                      setParticipantType('jobseeker');
-                      setErrorMessage(null);
-                    }
-                  }}
-                  className={`p-6 rounded-3xl border-2 transition-all cursor-pointer text-left relative flex flex-col justify-between ${
-                    participantType === 'jobseeker'
-                      ? 'bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/80 border-emerald-600 ring-4 ring-emerald-500/20 shadow-modern-lg scale-[1.01]'
-                      : 'bg-slate-50/90 hover:bg-white border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${
-                          participantType === 'jobseeker'
-                            ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        <GraduationCap className="w-6 h-6" />
-                      </div>
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                          participantType === 'jobseeker'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-slate-200 text-slate-600'
-                        }`}
-                      >
-                        Formulaire Demandeur
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-black text-slate-900">
-                      Demandeur d'Emploi &amp; Candidat
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                      Réservé aux personnes en recherche d'emploi, diplômés et profils souhaitant rencontrer les recruteurs.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 pt-3.5 border-t border-slate-200/80 flex items-center justify-between text-xs font-bold">
-                    <span className={participantType === 'jobseeker' ? 'text-emerald-700' : 'text-slate-500'}>
-                      {participantType === 'jobseeker' ? '● Formulaire Demandeur actif' : 'Cliquer pour remplir ce formulaire'}
-                    </span>
-                    <span
-                      className={`text-[11px] px-2.5 py-1 rounded-md font-mono font-bold ${
-                        participantType === 'jobseeker'
-                          ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-slate-200 text-slate-600'
-                      }`}
-                    >
-                      {participantType === 'jobseeker' ? 'Sélectionné' : 'Choisir'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+                Formulaire d'inscription des Participants
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Renseignez vos informations ci-dessous pour valider votre inscription aux activités sélectionnées :
+              </p>
             </div>
 
             {/* MESSAGE D'ERREUR */}
@@ -628,223 +443,6 @@ export default function InvitePage({ params }: InvitePageProps) {
                 <span className="font-semibold">{errorMessage}</span>
               </div>
             )}
-
-            {/* SECTION FORMULAIRE 1 : DÉDIÉ AUX ENTREPRISES */}
-            {participantType === 'company' && (
-              <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-200 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6 text-left animate-in fade-in duration-200">
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center">
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-indigo-700 block">
-                        ESPACE RECRUTEUR &amp; PARTENAIRE
-                      </span>
-                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        Formulaire d'inscription Entreprise
-                      </h2>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setParticipantType('jobseeker');
-                      setErrorMessage(null);
-                    }}
-                    className="text-xs text-slate-500 hover:text-emerald-700 font-semibold underline cursor-pointer"
-                  >
-                    Vous êtes demandeur d'emploi ? Accéder au formulaire candidat
-                  </button>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Nom Entreprise */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Nom de l'Entreprise / Opérateur *
-                    </label>
-                    <div className="relative">
-                      <Building className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                      <input
-                        type="text"
-                        required
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
-                        placeholder="Ex: TotalEnergies, Perenco, Assala Energy, PME..."
-                        className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Nom & Fonction */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Nom &amp; Prénom du Représentant *
-                      </label>
-                      <div className="relative">
-                        <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="text"
-                          required
-                          value={participantName}
-                          onChange={(e) => setParticipantName(e.target.value)}
-                          placeholder="Ex: Marc Obame"
-                          className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Fonction / Poste *
-                      </label>
-                      <div className="relative">
-                        <Briefcase className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="text"
-                          required
-                          value={jobTitle}
-                          onChange={(e) => setJobTitle(e.target.value)}
-                          placeholder="Ex: Directeur Général, DRH..."
-                          className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Téléphone & Email */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Téléphone / WhatsApp *
-                      </label>
-                      <div className="relative">
-                        <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="tel"
-                          required
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          placeholder="+241 77 12 34 56"
-                          className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                        Adresse E-mail *
-                      </label>
-                      <div className="relative">
-                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        <input
-                          type="email"
-                          required
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="contact@entreprise.ga"
-                          className="w-full pl-10 pr-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Nombre de personnes */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Nombre de Personnes Présentes
-                    </label>
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((num) => (
-                        <button
-                          key={num}
-                          type="button"
-                          onClick={() => setAttendeesCount(num)}
-                          className={`flex-1 py-2.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                            attendeesCount === num
-                              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
-                              : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                          }`}
-                        >
-                          {num} pers.
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Commentaires / Besoins Stand */}
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Commentaires ou Besoins <span className="text-slate-400 font-normal">(Optionnel, ex: réservation de stand)</span>
-                    </label>
-                    <textarea
-                      rows={2}
-                      value={comments}
-                      onChange={(e) => setComments(e.target.value)}
-                      placeholder="Ex: Nous souhaitons réserver un stand pour le Mini-salon..."
-                      className="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-600/20 text-slate-900 transition-all font-sans"
-                    />
-                  </div>
-
-                  {/* Bouton de confirmation Entreprise */}
-                  <div className="pt-3">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full py-4 px-6 rounded-2xl font-black text-xs sm:text-sm uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-2 shadow-md bg-black text-white hover:bg-emerald-600 shadow-black/20 hover:shadow-emerald-600/30 hover:scale-[1.01] cursor-pointer"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Validation en cours...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Confirmer l'inscription de l'Entreprise</span>
-                          <ArrowRight className="w-5 h-5" />
-                        </>
-                      )}
-                    </button>
-                    <p className="text-[11px] text-center text-slate-400 mt-2 font-medium">
-                      L'inscription de votre entreprise sera immédiatement confirmée et enregistrée.
-                    </p>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* SECTION FORMULAIRE 2 : DÉDIÉ AUX DEMANDEURS D'EMPLOI */}
-            {participantType === 'jobseeker' && (
-              <div className="bg-white/95 backdrop-blur-md border-2 border-emerald-200 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6 text-left animate-in fade-in duration-200">
-                <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center">
-                      <GraduationCap className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
-                        ESPACE CANDIDAT &amp; INSERTION
-                      </span>
-                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                        Formulaire d'inscription Demandeur d'Emploi
-                      </h2>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setParticipantType('company');
-                      setErrorMessage(null);
-                    }}
-                    className="text-xs text-slate-500 hover:text-indigo-700 font-semibold underline cursor-pointer"
-                  >
-                    Vous représentez une entreprise ? Accéder au formulaire entreprise
-                  </button>
-                </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -959,18 +557,16 @@ export default function InvitePage({ params }: InvitePageProps) {
                         </>
                       ) : (
                         <>
-                          <span>Confirmer mon inscription Demandeur d'emploi</span>
+                          <span>Confirmer mon inscription</span>
                           <ArrowRight className="w-5 h-5" />
                         </>
                       )}
                     </button>
                     <p className="text-[11px] text-center text-slate-400 mt-2 font-medium">
-                      Votre inscription en tant que demandeur d'emploi sera immédiatement enregistrée.
+                      Votre inscription sera immédiatement enregistrée pour les activités sélectionnées.
                     </p>
                   </div>
                 </form>
-              </div>
-            )}
           </div>
         </div>
       )}
