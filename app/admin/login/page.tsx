@@ -8,8 +8,8 @@ import OfficialHeader from '@/components/OfficialHeader';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('greenmoundounga@gmail.com');
-  const [code, setCode] = useState('phlmlingreen@1992');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
