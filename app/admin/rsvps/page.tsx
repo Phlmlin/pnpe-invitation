@@ -22,13 +22,15 @@ import {
   Loader2,
   ArrowLeft,
   Activity,
-  Layers
+  Layers,
+  IdCard
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { store } from '@/lib/store';
 import { Invitation, RSVPRegistration } from '@/lib/types';
 import AdminLayout from '@/components/AdminLayout';
 import { exportRSVPsToCSV } from '@/lib/exportCsv';
+import ParticipantBadge from '@/components/ParticipantBadge';
 
 export default function GlobalRSVPsPage() {
   const router = useRouter();
@@ -40,6 +42,9 @@ export default function GlobalRSVPsPage() {
 
   const [filterTab, setFilterTab] = useState<'all' | 'volet-1' | 'volet-2' | 'both'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Modal Badge
+  const [badgeRSVP, setBadgeRSVP] = useState<RSVPRegistration | null>(null);
 
   // Modal Ajout Manuel
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -474,14 +479,24 @@ export default function GlobalRSVPsPage() {
                           {r.attendeesCount} pers.
                         </td>
 
-                        <td className="py-4 px-6 text-right">
-                          <button
-                            onClick={() => handleDeleteRSVP(r.id, r.company)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <td className="py-4 px-6 text-right whitespace-nowrap">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setBadgeRSVP(r)}
+                              className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 font-bold text-xs shadow-xs"
+                              title="Voir et télécharger le Badge PDF"
+                            >
+                              <IdCard className="w-3.5 h-3.5" />
+                              <span>Badge</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRSVP(r.id, r.company)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -588,6 +603,34 @@ export default function GlobalRSVPsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL APERÇU ET TÉLÉCHARGEMENT BADGE */}
+        {badgeRSVP && selectedInvitation && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in overflow-y-auto">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl relative my-8 border border-slate-200">
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <IdCard className="w-5 h-5 text-indigo-600" />
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                    Badge Officiel Participant
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setBadgeRSVP(null)}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <ParticipantBadge
+                rsvp={badgeRSVP}
+                invitation={selectedInvitation}
+                showActions={true}
+              />
             </div>
           </div>
         )}
