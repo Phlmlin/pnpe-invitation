@@ -16,7 +16,11 @@ import {
   ShieldAlert,
   Loader2,
   Calendar,
-  Share2
+  Share2,
+  HelpCircle,
+  PlusCircle,
+  Info,
+  Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { store } from '@/lib/store';
@@ -41,6 +45,7 @@ export default function InvitePage({ params }: InvitePageProps) {
   const [selectedVolets, setSelectedVolets] = useState<string[]>(['volet-1', 'volet-2']); // Par défaut les 2 sont présélectionnés
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [confirmedRSVP, setConfirmedRSVP] = useState<RSVPRegistration | null>(null);
+  const [isSingleVoletModalOpen, setIsSingleVoletModalOpen] = useState(false);
 
   // Formulaire
   const [company, setCompany] = useState('');
@@ -106,21 +111,11 @@ export default function InvitePage({ params }: InvitePageProps) {
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage(null);
-
-    if (selectedVolets.length === 0) {
-      setErrorMessage('Veuillez sélectionner au moins un volet ci-dessus.');
-      return;
-    }
-
-    if (!company.trim() || !participantName.trim() || !phone.trim() || !email.trim()) {
-      setErrorMessage('Veuillez remplir tous les champs obligatoires (*).');
-      return;
-    }
-
+  // Exécution finale de l'enregistrement avec les volets confirmés
+  const executeRegistration = async (voletsToSave: string[]) => {
+    if (!invitation) return;
     setIsSubmitting(true);
+    setErrorMessage(null);
 
     try {
       const randomCode = Math.floor(1000 + Math.random() * 9000);
@@ -135,7 +130,7 @@ export default function InvitePage({ params }: InvitePageProps) {
         jobTitle: jobTitle.trim() || 'Représentant',
         phone: phone.trim(),
         email: email.trim().toLowerCase(),
-        volets: selectedVolets,
+        volets: voletsToSave,
         attendeesCount: Number(attendeesCount) || 1,
         comments: comments.trim() || undefined,
         createdAt: new Date().toISOString(),
@@ -155,6 +150,7 @@ export default function InvitePage({ params }: InvitePageProps) {
       }
 
       setConfirmedRSVP(newRSVP);
+      setIsSingleVoletModalOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
       console.error(err);
@@ -163,6 +159,38 @@ export default function InvitePage({ params }: InvitePageProps) {
       setIsSubmitting(false);
     }
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    if (selectedVolets.length === 0) {
+      setErrorMessage('Veuillez sélectionner au moins un volet de présence ci-dessus.');
+      return;
+    }
+
+    if (!company.trim() || !participantName.trim() || !phone.trim() || !email.trim()) {
+      setErrorMessage('Veuillez remplir tous les champs obligatoires (*).');
+      return;
+    }
+
+    // Si le participant a sélectionné un seul volet alors que plusieurs volets sont prévus :
+    if (selectedVolets.length === 1 && invitation && invitation.volets.length > 1) {
+      setIsSingleVoletModalOpen(true);
+      return;
+    }
+
+    // Si les deux volets sont déjà sélectionnés : validation directe sans interruption
+    await executeRegistration(selectedVolets);
+  };
+
+  const singleVolet = invitation && selectedVolets.length === 1
+    ? invitation.volets.find((v) => v.id === selectedVolets[0])
+    : null;
+
+  const missingVolet = invitation && selectedVolets.length === 1
+    ? invitation.volets.find((v) => v.id !== selectedVolets[0])
+    : null;
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 relative">
@@ -242,21 +270,35 @@ export default function InvitePage({ params }: InvitePageProps) {
             <div className="lg:col-span-7 space-y-8">
               
               {/* ÉTAPE 1 : CHOIX DES VOLETS */}
-              <div>
-                <div className="mb-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/60 text-blue-800 text-xs font-bold uppercase tracking-wider mb-2">
-                    <span>Étape 1 sur 2</span>
+              <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 shadow-modern space-y-4">
+                <div className="mb-2">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider mb-2">
+                    <Calendar className="w-3.5 h-3.5 text-blue-700" />
+                    <span>Étape 1 sur 2 : Sélection des Volets</span>
                   </div>
-                  <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                     Sélectionnez vos séquences de présence
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                    Cliquez sur les volets ci-dessous pour activer votre inscription au Volet 1, au Volet 2 ou aux deux.
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1.5 font-medium leading-relaxed">
+                    Vous pouvez vous inscrire au <strong className="text-blue-700 font-bold">Volet 1</strong>, au <strong className="text-emerald-700 font-bold">Volet 2</strong> ou <strong className="text-indigo-950 font-black underline underline-offset-4">aux deux volets</strong>.
                   </p>
                 </div>
 
+                {/* Rappel bien visible pour le participant */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50/70 border border-amber-200/90 text-amber-950 text-xs flex items-start gap-3 shadow-xs">
+                  <Info className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="font-extrabold uppercase tracking-wide text-amber-900">
+                      Rappel de sélection
+                    </p>
+                    <p className="text-amber-800 leading-relaxed font-medium">
+                      Veillez à cocher tous les volets auxquels vous ou votre délégation participerez. Si vous cochez un seul volet, une confirmation vous sera demandée avant la validation définitive.
+                    </p>
+                  </div>
+                </div>
+
                 {/* Blocs Volets Tactiles */}
-                <div className="space-y-4">
+                <div className="space-y-4 pt-1">
                   {invitation.volets.map((volet) => (
                     <VoletCard
                       key={volet.id}
@@ -268,27 +310,27 @@ export default function InvitePage({ params }: InvitePageProps) {
                 </div>
 
                 {/* Indicateur de sélection interactif */}
-                <div className="mt-4 p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex items-center justify-between gap-2 text-xs font-medium">
+                <div className="mt-4 p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-semibold">
                   {selectedVolets.length === 2 ? (
-                    <div className="text-emerald-800 flex items-center gap-2 font-bold">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                      <span>Vous participez aux DEUX VOLETS (Ven. 16/10 + Sam. 17/10)</span>
+                    <div className="text-emerald-900 flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                      <span>Vous participez aux <strong>DEUX VOLETS</strong> (Programme complet)</span>
                     </div>
                   ) : selectedVolets.length === 1 ? (
-                    <div className="text-indigo-800 flex items-center gap-2 font-bold">
-                      <CheckCircle2 className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                    <div className="text-indigo-900 flex items-center gap-2">
+                      <Info className="w-5 h-5 text-indigo-600 flex-shrink-0" />
                       <span>
-                        Vous participez à 1 VOLET : {selectedVolets[0] === 'volet-1' ? 'Volet 1 (Ven. 16/10)' : 'Volet 2 (Sam. 17/10)'}
+                        Vous participez à <strong>1 SEUL VOLET</strong> ({singleVolet?.badge || 'Volet sélectionné'}). Pensez à cocher aussi le 2ème volet si vous participez aux deux.
                       </span>
                     </div>
                   ) : (
-                    <div className="text-amber-800 flex items-center gap-2 font-bold">
-                      <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                    <div className="text-amber-900 flex items-center gap-2">
+                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
                       <span>Veuillez cliquer sur au moins un volet ci-dessus.</span>
                     </div>
                   )}
-                  <span className="text-slate-400 font-mono text-[11px] hidden sm:inline">
-                    {selectedVolets.length}/2 sélectionné(s)
+                  <span className="text-slate-500 font-mono text-xs px-2.5 py-1 rounded-full bg-white border border-slate-200 self-start sm:self-auto font-bold">
+                    {selectedVolets.length}/{invitation.volets.length} volet(s) coché(s)
                   </span>
                 </div>
               </div>
@@ -487,6 +529,64 @@ export default function InvitePage({ params }: InvitePageProps) {
           onClose={() => setIsImageModalOpen(false)}
           title={`Affiche Officielle : ${invitation.title}`}
         />
+      )}
+
+      {/* MODALE DE CONFIRMATION DE PARTICIPATION À UN SEUL VOLET */}
+      {isSingleVoletModalOpen && singleVolet && missingVolet && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 text-left">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mb-4">
+              <HelpCircle className="w-6 h-6 text-amber-600" />
+            </div>
+
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">
+              Confirmation de votre présence
+            </h3>
+
+            <p className="text-sm text-slate-700 mt-3 leading-relaxed">
+              Vous avez sélectionné uniquement le <strong className="text-indigo-950 font-bold">{singleVolet.badge}</strong> ({singleVolet.title}).
+            </p>
+
+            <p className="text-sm text-slate-700 mt-2 leading-relaxed">
+              Souhaitez-vous confirmer votre inscription à ce seul volet ou souhaitez-vous également participer au <strong className="text-indigo-950 font-bold">{missingVolet.badge}</strong> ({missingVolet.title}) ?
+            </p>
+
+            <div className="mt-6 flex flex-col gap-3">
+              {/* Choix 2 : Ajouter le second volet */}
+              <button
+                type="button"
+                onClick={() => {
+                  const both = [singleVolet.id, missingVolet.id];
+                  setSelectedVolets(both);
+                  executeRegistration(both);
+                }}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-emerald-600/25 transition-all"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Ajouter le {missingVolet.badge} à mon inscription</span>
+              </button>
+
+              {/* Choix 1 : Confirmer ce seul volet */}
+              <button
+                type="button"
+                onClick={() => executeRegistration(selectedVolets)}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase tracking-wider transition-colors border border-slate-200"
+              >
+                <span>Confirmer mon inscription au {singleVolet.badge} uniquement</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsSingleVoletModalOpen(false)}
+                className="text-xs text-slate-400 hover:text-slate-600 underline text-center mt-1"
+              >
+                Modifier mon choix sur le formulaire
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

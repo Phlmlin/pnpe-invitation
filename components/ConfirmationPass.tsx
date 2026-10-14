@@ -239,7 +239,7 @@ export default function ConfirmationPass({
 
             {/* Consignes */}
             <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 text-xs text-slate-700 flex items-start gap-3">
-              <QrCode className="w-7 h-7 text-indigo-600 flex-shrink-0" />
+              <IdCard className="w-7 h-7 text-indigo-600 flex-shrink-0" />
               <div>
                 <p className="font-bold text-slate-900">
                   Badge &amp; Émargement sur place
