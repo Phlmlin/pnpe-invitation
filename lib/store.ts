@@ -1,11 +1,33 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Invitation, RSVPRegistration, StoreState } from './types';
+import { Invitation, RSVPRegistration, StoreState, TeamMember } from './types';
 import { DEFAULT_INVITATION, DEFAULT_RSVPS } from './seedData';
 
 const STORAGE_KEY_INVITATIONS = 'pnpe_invitations_v1';
 const STORAGE_KEY_RSVPS = 'pnpe_rsvps_v1';
+const STORAGE_KEY_MEMBERS = 'pnpe_team_members_v1';
 const STORAGE_KEY_SUPABASE = 'pnpe_supabase_config_v1';
 const STORE_EVENT = 'pnpe_store_sync_event';
+
+export const DEFAULT_MEMBERS: TeamMember[] = [
+  {
+    id: 'member-green',
+    name: 'Green MOUNDOUNGA',
+    email: 'greenmoundounga@gmail.com',
+    role: 'superadmin',
+    password: 'phlmlingreen@1992',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    addedBy: 'Direction'
+  },
+  {
+    id: 'member-admin',
+    name: 'Direction PNPE',
+    email: 'admin@pnpe.ga',
+    role: 'superadmin',
+    password: '2026',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    addedBy: 'Direction'
+  }
+];
 
 let cachedClient: SupabaseClient | null = null;
 let lastUrl: string | null = null;
@@ -61,13 +83,20 @@ export function getSupabaseClient(): SupabaseClient | null {
 let memoryState: StoreState = {
   invitations: [DEFAULT_INVITATION],
   rsvps: [...DEFAULT_RSVPS],
+  members: [...DEFAULT_MEMBERS],
 };
 
 function initLocalStorage() {
   if (!isClient()) return;
 
   const initialized = localStorage.getItem('pnpe_initialized_v2');
-  if (initialized) return;
+  if (initialized) {
+    // S'assurer que la clé des membres existe même pour un client déjà initialisé
+    if (localStorage.getItem(STORAGE_KEY_MEMBERS) === null) {
+      localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(DEFAULT_MEMBERS));
+    }
+    return;
+  }
 
   localStorage.setItem('pnpe_initialized_v2', 'true');
   const storedInv = localStorage.getItem(STORAGE_KEY_INVITATIONS);
@@ -78,6 +107,11 @@ function initLocalStorage() {
   const storedRsvps = localStorage.getItem(STORAGE_KEY_RSVPS);
   if (storedRsvps === null) {
     localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(DEFAULT_RSVPS));
+  }
+
+  const storedMembers = localStorage.getItem(STORAGE_KEY_MEMBERS);
+  if (storedMembers === null) {
+    localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(DEFAULT_MEMBERS));
   }
 }
 
@@ -446,10 +480,107 @@ export const store = {
     };
   },
 
+  async getTeamMembers(): Promise<TeamMember[]> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('team_members')
+          .select('*')
+          .order('createdAt', { ascending: true });
+        if (!error && data && data.length > 0) {
+          return data as TeamMember[];
+        }
+      } catch (err) {
+        console.warn('Fallback local après erreur Supabase getTeamMembers:', err);
+      }
+    }
+
+    if (!isClient()) {
+      return memoryState.members || DEFAULT_MEMBERS;
+    }
+    initLocalStorage();
+
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_MEMBERS);
+      if (raw !== null) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed as TeamMember[];
+        }
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_MEMBERS;
+  },
+
+  async saveTeamMember(member: TeamMember): Promise<TeamMember> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('team_members').upsert(member);
+        if (error) {
+          console.warn('Erreur sauvegarde team_members Supabase:', error);
+        }
+      } catch (err) {
+        console.warn('Erreur insertion Supabase team_members:', err);
+      }
+    }
+
+    if (isClient()) {
+      initLocalStorage();
+      const current = await this.getTeamMembers();
+      const index = current.findIndex(
+        (m) => m.id === member.id || m.email.toLowerCase() === member.email.toLowerCase()
+      );
+      if (index >= 0) {
+        current[index] = member;
+      } else {
+        current.push(member);
+      }
+      localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(current));
+      notifyUpdate();
+    } else {
+      if (!memoryState.members) memoryState.members = [...DEFAULT_MEMBERS];
+      const idx = memoryState.members.findIndex(
+        (m) => m.id === member.id || m.email.toLowerCase() === member.email.toLowerCase()
+      );
+      if (idx >= 0) memoryState.members[idx] = member;
+      else memoryState.members.push(member);
+    }
+
+    return member;
+  },
+
+  async deleteTeamMember(id: string): Promise<void> {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        await supabase.from('team_members').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Erreur suppression Supabase team_members:', err);
+      }
+    }
+
+    if (isClient()) {
+      initLocalStorage();
+      const current = await this.getTeamMembers();
+      const filtered = current.filter((m) => m.id !== id);
+      localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(filtered));
+      notifyUpdate();
+    }
+
+    if (memoryState.members) {
+      memoryState.members = memoryState.members.filter((m) => m.id !== id);
+    }
+  },
+
   resetToDefault(): void {
     if (isClient()) {
       localStorage.setItem(STORAGE_KEY_INVITATIONS, JSON.stringify([DEFAULT_INVITATION]));
       localStorage.setItem(STORAGE_KEY_RSVPS, JSON.stringify(DEFAULT_RSVPS));
+      localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(DEFAULT_MEMBERS));
       notifyUpdate();
     }
   }

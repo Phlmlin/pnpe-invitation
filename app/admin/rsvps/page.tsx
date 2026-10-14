@@ -133,6 +133,9 @@ export default function GlobalRSVPsPage() {
     setNewComments('');
   };
 
+  const currentUser = auth.getSession();
+  const isViewer = currentUser?.role === 'viewer';
+
   const totalRegistrations = rsvps.length;
   const countVolet1 = rsvps.filter((r) => r.volets && r.volets.includes('volet-1')).length;
   const countVolet2 = rsvps.filter((r) => r.volets && r.volets.includes('volet-2')).length;
@@ -220,23 +223,25 @@ export default function GlobalRSVPsPage() {
                 <span>Suivi Live des Inscriptions</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-                Participants &amp; Entreprises Enregistrées
+                Demandeurs d'emploi Enregistrés
               </h1>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold tracking-wider border border-slate-200 transition-colors shadow-xs"
-              >
-                <Plus className="w-4 h-4 text-indigo-600" />
-                <span>Ajout Manuel</span>
-              </button>
+              {!isViewer && (
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold tracking-wider border border-slate-200 transition-colors shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-indigo-600" />
+                  <span>Ajout Manuel (Demandeur)</span>
+                </button>
+              )}
 
               {selectedInvitation && (
                 <button
                   onClick={() => exportRSVPsToCSV(filteredRSVPs, selectedInvitation)}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold tracking-wider transition-all shadow-sm shadow-emerald-500/20"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold tracking-wider transition-all shadow-sm shadow-emerald-500/20 cursor-pointer"
                   title="Exporter pour Microsoft Excel"
                 >
                   <Download className="w-4 h-4 text-[#FCD116]" />
@@ -308,7 +313,7 @@ export default function GlobalRSVPsPage() {
             <p className="text-3xl font-extrabold text-slate-900 tabular-nums">
               {totalRegistrations}
             </p>
-            <p className="text-xs text-slate-500 mt-1 font-medium">Entreprises enregistrées</p>
+            <p className="text-xs text-slate-500 mt-1 font-medium">Demandeurs enregistrés</p>
           </div>
 
           <div className="p-5 rounded-3xl bg-gradient-to-br from-blue-50/90 to-indigo-50/60 border border-blue-200/80 shadow-modern">
@@ -338,7 +343,7 @@ export default function GlobalRSVPsPage() {
             <p className="text-3xl font-extrabold text-amber-900 tabular-nums">
               {countBoth}
             </p>
-            <p className="text-xs text-amber-700 mt-1 font-medium">Participation intégrale</p>
+            <p className="text-xs text-amber-700 mt-1 font-medium">Participation aux 2 activités</p>
           </div>
         </div>
 
@@ -383,7 +388,7 @@ export default function GlobalRSVPsPage() {
                   : 'text-amber-700 hover:bg-amber-50'
               }`}
             >
-              Les 2 ({countBoth})
+              Les 2 Activités ({countBoth})
             </button>
           </div>
 
@@ -391,7 +396,7 @@ export default function GlobalRSVPsPage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Rechercher entreprise, nom..."
+              placeholder="Rechercher un demandeur, profil, N° PNPE..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 text-slate-900"
@@ -399,17 +404,17 @@ export default function GlobalRSVPsPage() {
           </div>
         </div>
 
-        {/* TABLEAU DES PARTICIPANTS */}
+        {/* TABLEAU DES DEMANDEURS */}
         <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-modern overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-50 border-b border-slate-200/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="py-4 px-6">Entreprise</th>
-                  <th className="py-4 px-6">Participant</th>
+                  <th className="py-4 px-6">Demandeur d'emploi</th>
+                  <th className="py-4 px-6">Profil &amp; Métier</th>
                   <th className="py-4 px-6">Contact</th>
-                  <th className="py-4 px-6">Volets Choisis</th>
-                  <th className="py-4 px-6 text-center">Délégation</th>
+                  <th className="py-4 px-6">Activités Choisies</th>
+                  <th className="py-4 px-6 text-center">N° PNPE</th>
                   <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
@@ -426,38 +431,51 @@ export default function GlobalRSVPsPage() {
                     const hasV2 = r.volets && r.volets.includes('volet-2');
                     const cleanPhone = r.phone.replace(/[^0-9+]/g, '');
 
+                    // Extraction du numéro PNPE
+                    const pnpeNumber = r.comments?.includes('Numéro PNPE :')
+                      ? r.comments.replace('Numéro PNPE :', '').trim()
+                      : r.company?.includes('N° PNPE:')
+                      ? r.company.split('N° PNPE:')[1]?.replace(')', '').trim()
+                      : '-';
+
                     return (
                       <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-4 px-6">
-                          <p className="font-extrabold text-slate-900 text-sm">{r.company}</p>
+                          <p className="font-extrabold text-slate-900 text-sm">{r.participantName}</p>
                           <span className="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 mt-1 inline-block">
                             {r.confirmationCode}
                           </span>
                         </td>
 
                         <td className="py-4 px-6">
-                          <p className="font-bold text-slate-800">{r.participantName}</p>
-                          <p className="text-[11px] text-slate-500">{r.jobTitle}</p>
+                          <p className="font-bold text-slate-800">{r.jobTitle || 'Demandeur'}</p>
+                          <p className="text-[11px] text-slate-400">
+                            Inscrit le {new Date(r.createdAt).toLocaleDateString('fr-FR')}
+                          </p>
                         </td>
 
                         <td className="py-4 px-6 space-y-1">
                           <div className="flex items-center gap-1.5 text-slate-700">
                             <Phone className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{r.phone}</span>
-                            <a
-                              href={`https://wa.me/${cleanPhone.replace('+', '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-emerald-600 hover:text-emerald-700 ml-1"
-                              title="Contacter sur WhatsApp"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" />
-                            </a>
+                            <span>{r.phone || 'Non renseigné'}</span>
+                            {r.phone && r.phone !== 'Non renseigné' && (
+                              <a
+                                href={`https://wa.me/${cleanPhone.replace('+', '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-emerald-600 hover:text-emerald-700 ml-1"
+                                title="Contacter sur WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                              </a>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
-                            <Mail className="w-3.5 h-3.5 text-slate-400" />
-                            <span>{r.email}</span>
-                          </div>
+                          {r.email && r.email !== 'non-renseigne@pnpe.ga' && (
+                            <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+                              <Mail className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{r.email}</span>
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-4 px-6">
@@ -475,27 +493,30 @@ export default function GlobalRSVPsPage() {
                           </div>
                         </td>
 
-                        <td className="py-4 px-6 text-center font-bold text-slate-700 tabular-nums">
-                          {r.attendeesCount} pers.
+                        <td className="py-4 px-6 text-center font-mono text-xs text-slate-700 font-semibold">
+                          {pnpeNumber}
                         </td>
 
                         <td className="py-4 px-6 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
                               onClick={() => setBadgeRSVP(r)}
-                              className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 font-bold text-xs shadow-xs"
+                              className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 font-bold text-xs shadow-xs cursor-pointer"
                               title="Voir et télécharger le Badge PDF"
                             >
                               <IdCard className="w-3.5 h-3.5" />
                               <span>Badge</span>
                             </button>
-                            <button
-                              onClick={() => handleDeleteRSVP(r.id, r.company)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                              title="Supprimer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+
+                            {!isViewer && (
+                              <button
+                                onClick={() => handleDeleteRSVP(r.id, r.participantName || r.company)}
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

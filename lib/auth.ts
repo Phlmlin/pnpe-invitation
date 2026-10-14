@@ -1,17 +1,57 @@
-import { AdminUser } from './types';
+import { AdminUser, TeamMember } from './types';
+import { DEFAULT_MEMBERS } from './store';
 
 const ADMIN_SESSION_KEY = 'pnpe_admin_auth_v1';
+const STORAGE_KEY_MEMBERS = 'pnpe_team_members_v1';
 
 export const auth = {
-  login(email: string, code: string): { success: boolean; error?: string } {
+  login(email: string, code: string): { success: boolean; error?: string; user?: AdminUser } {
     const cleanEmail = email.trim().toLowerCase();
     const cleanCode = code.trim();
 
+    // 1. Récupérer les membres de l'équipe (LocalStorage ou DEFAULT_MEMBERS)
+    let members: TeamMember[] = DEFAULT_MEMBERS;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_MEMBERS);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            members = parsed;
+          }
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    // 2. Chercher le compte correspondant dans la liste des collaborateurs
+    const found = members.find(
+      (m) => m.email.trim().toLowerCase() === cleanEmail && m.password?.trim() === cleanCode
+    );
+
+    if (found) {
+      const user: AdminUser = {
+        id: found.id,
+        email: found.email,
+        role: found.role,
+        name: found.name,
+      };
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(user));
+        document.cookie = `pnpe_auth_token=valid_session_2026; path=/; max-age=86400; SameSite=Lax`;
+      }
+      return { success: true, user };
+    }
+
+    // 3. Fallback direct sur les identifiants superviseurs de secours
     if (
       (cleanEmail === 'greenmoundounga@gmail.com' && cleanCode === 'phlmlingreen@1992') ||
       (cleanEmail === 'admin@pnpe.ga' && cleanCode === '2026')
     ) {
       const user: AdminUser = {
+        id: cleanEmail.includes('green') ? 'member-green' : 'member-admin',
         email: cleanEmail,
         role: 'superadmin',
         name: cleanEmail.includes('green') ? 'Green MOUNDOUNGA' : 'Direction PNPE',
@@ -20,7 +60,7 @@ export const auth = {
         localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(user));
         document.cookie = `pnpe_auth_token=valid_session_2026; path=/; max-age=86400; SameSite=Lax`;
       }
-      return { success: true };
+      return { success: true, user };
     }
 
     return {
@@ -57,4 +97,21 @@ export const auth = {
       return false;
     }
   },
+
+  canEdit(user?: AdminUser | null): boolean {
+    const u = user || this.getSession();
+    if (!u) return false;
+    return u.role === 'superadmin' || u.role === 'admin';
+  },
+
+  canManageMembers(user?: AdminUser | null): boolean {
+    const u = user || this.getSession();
+    if (!u) return false;
+    return u.role === 'superadmin';
+  },
+
+  canExport(user?: AdminUser | null): boolean {
+    const u = user || this.getSession();
+    return !!u; // Tous les membres authentifiés peuvent extraire les données
+  }
 };

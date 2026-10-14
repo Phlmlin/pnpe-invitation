@@ -7,15 +7,14 @@ export function exportRSVPsToCSV(rsvps: RSVPRegistration[], invitation?: Invitat
   const headers = [
     "Date d'enregistrement",
     "Code Confirmation",
-    "Entreprise / Structure",
-    "Participant (Nom & Prénom)",
-    "Fonction / Poste",
+    "Demandeur d'emploi (Nom & Prénom)",
+    "Profil / Métier",
+    "Numéro PNPE",
     "Téléphone / WhatsApp",
     "Email",
-    "Participation Volet 1 (Vendredi 16/10)",
-    "Participation Volet 2 (Samedi 17/10)",
-    "Nombre de personnes",
-    "Commentaires & Besoins (Stand)",
+    "Participation Activité 1",
+    "Participation Activité 2",
+    "Commentaires & Détails",
     "Émargement Jour J"
   ];
 
@@ -29,8 +28,14 @@ export function exportRSVPsToCSV(rsvps: RSVPRegistration[], invitation?: Invitat
       minute: '2-digit'
     });
 
-    const isVolet1 = r.volets.includes('volet-1') ? 'OUI' : 'NON';
-    const isVolet2 = r.volets.includes('volet-2') ? 'OUI' : 'NON';
+    const isVolet1 = r.volets && r.volets.includes('volet-1') ? 'OUI' : 'NON';
+    const isVolet2 = r.volets && r.volets.includes('volet-2') ? 'OUI' : 'NON';
+
+    const pnpeNumber = r.comments?.includes('Numéro PNPE :')
+      ? r.comments.replace('Numéro PNPE :', '').trim()
+      : r.company?.includes('N° PNPE:')
+      ? r.company.split('N° PNPE:')[1]?.replace(')', '').trim()
+      : '';
 
     const escape = (val: string | number | undefined) => {
       const str = String(val ?? '').replace(/"/g, '""');
@@ -40,14 +45,13 @@ export function exportRSVPsToCSV(rsvps: RSVPRegistration[], invitation?: Invitat
     return [
       escape(dateFormatted),
       escape(r.confirmationCode),
-      escape(r.company),
       escape(r.participantName),
-      escape(r.jobTitle),
+      escape(r.jobTitle || 'Demandeur d\'emploi'),
+      escape(pnpeNumber),
       escape(r.phone),
       escape(r.email),
       escape(isVolet1),
       escape(isVolet2),
-      escape(r.attendeesCount),
       escape(r.comments || ''),
       escape('') // Colonne vide pour la signature sur la feuille d'émargement
     ].join(';');
@@ -59,10 +63,10 @@ export function exportRSVPsToCSV(rsvps: RSVPRegistration[], invitation?: Invitat
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   
-  const slugPart = invitation ? invitation.slug : 'pnpe-rsvps';
+  const slugPart = invitation ? invitation.slug : 'pnpe-demandeurs';
   const dateStr = new Date().toISOString().slice(0, 10);
   link.setAttribute('href', url);
-  link.setAttribute('download', `emargement_${slugPart}_${dateStr}.csv`);
+  link.setAttribute('download', `demandeurs_${slugPart}_${dateStr}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

@@ -43,13 +43,27 @@ export interface RSVPRegistration {
   createdAt: string;
 }
 
-export interface AdminUser {
+export type MemberRole = 'superadmin' | 'admin' | 'viewer';
+
+export interface TeamMember {
+  id: string;
+  name: string;
   email: string;
-  role: 'superadmin' | 'admin';
+  role: MemberRole;
+  password?: string;
+  createdAt: string;
+  addedBy?: string;
+}
+
+export interface AdminUser {
+  id?: string;
+  email: string;
+  role: MemberRole;
   name: string;
 }
 
 export interface StoreState {
   invitations: Invitation[];
   rsvps: RSVPRegistration[];
+  members?: TeamMember[];
 }

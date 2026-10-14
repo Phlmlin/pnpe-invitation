@@ -24,10 +24,12 @@ import {
   Trash2
 } from 'lucide-react';
 import { store } from '@/lib/store';
-import { Invitation } from '@/lib/types';
+import { auth } from '@/lib/auth';
+import { Invitation, AdminUser } from '@/lib/types';
 import AdminLayout from '@/components/AdminLayout';
 
 export default function AdminDashboardPage() {
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [statsMap, setStatsMap] = useState<Record<string, { total: number; v1: number; v2: number; both: number; attendees: number }>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -35,6 +37,8 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setCurrentUser(auth.getSession());
+
     async function loadData() {
       const list = await store.getInvitations();
       setInvitations(list);
@@ -91,6 +95,7 @@ export default function AdminDashboardPage() {
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   };
 
+  const isViewer = currentUser?.role === 'viewer';
   const totalCompaniesAll = Object.values(statsMap).reduce((acc, curr) => acc + curr.total, 0);
   const totalVolet1All = Object.values(statsMap).reduce((acc, curr) => acc + curr.v1, 0);
   const totalVolet2All = Object.values(statsMap).reduce((acc, curr) => acc + curr.v2, 0);
@@ -111,17 +116,19 @@ export default function AdminDashboardPage() {
               Tableau de Bord des Activités
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-              Générez vos activités, partagez vos liens officiels et suivez les confirmations d'inscription.
+              Suivez les inscriptions des demandeurs d'emploi et accédez aux statistiques en direct.
             </p>
           </div>
 
-          <Link
-            href="/admin/new"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 hover:scale-[1.02]"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Créer une Activité</span>
-          </Link>
+          {!isViewer && (
+            <Link
+              href="/admin/new"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 hover:scale-[1.02]"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>Créer une Activité</span>
+            </Link>
+          )}
         </div>
 
         {/* 4 CARTES MÉTRIQUES SAAS (SQUIRCLES COLORÉS) */}
@@ -365,36 +372,40 @@ export default function AdminDashboardPage() {
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-colors"
                       >
                         <Users className="w-3.5 h-3.5 text-indigo-300" />
-                        <span>Inscrits ({stats.total})</span>
+                        <span>Demandeurs inscrits ({stats.total})</span>
                       </Link>
 
-                      <Link
-                        href={`/admin/${inv.id}/email`}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
-                        title="Générateur de template e-mail"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Kit Mail</span>
-                      </Link>
+                      {!isViewer && (
+                        <>
+                          <Link
+                            href={`/admin/${inv.id}/email`}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                            title="Générateur de template e-mail"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Kit Mail</span>
+                          </Link>
 
-                      <Link
-                        href={`/admin/${inv.id}/edit`}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
-                        title="Modifier l'invitation"
-                      >
-                        <Edit className="w-3.5 h-3.5" />
-                        <span>Modifier</span>
-                      </Link>
+                          <Link
+                            href={`/admin/${inv.id}/edit`}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
+                            title="Modifier l'invitation"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Modifier</span>
+                          </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteInvitation(inv.id, inv.title)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-700 hover:border-rose-200 border border-transparent text-xs font-semibold transition-all cursor-pointer"
-                        title="Supprimer définitivement cette invitation"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
-                        <span className="hidden sm:inline">Supprimer</span>
-                      </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteInvitation(inv.id, inv.title)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-500 hover:text-rose-700 hover:border-rose-200 border border-transparent text-xs font-semibold transition-all cursor-pointer"
+                            title="Supprimer définitivement cette invitation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                            <span className="hidden sm:inline">Supprimer</span>
+                          </button>
+                        </>
+                      )}
                     </div>
 
                   </div>

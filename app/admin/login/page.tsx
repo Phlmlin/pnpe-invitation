@@ -55,10 +55,10 @@ export default function AdminLoginPage() {
               />
             </div>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Connexion Direction PNPE
+              Connexion Espace PNPE
             </h1>
             <p className="text-xs text-slate-500 mt-1.5">
-              Accès réservé pour créer les activités et suivre les inscrits en direct
+              Accès réservé aux administrateurs et collaborateurs autorisés
             </p>
           </div>
 
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Email Administrateur
+                Adresse E-mail Professionnelle
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="greenmoundounga@gmail.com"
+                  placeholder="nom@pnpe.ga"
                   className="w-full pl-10 pr-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 text-slate-900 transition-all font-sans"
                 />
               </div>
@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                Mot de Passe
+                Mot de Passe / Code d&apos;accès
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -109,7 +109,7 @@ export default function AdminLoginPage() {
               disabled={loading}
               className="w-full mt-2 py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
             >
-              <span>Se Connecter à l'Espace Admin</span>
+              <span>Se Connecter à l&apos;Espace PNPE</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>

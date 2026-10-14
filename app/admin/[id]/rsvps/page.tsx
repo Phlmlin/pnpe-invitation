@@ -127,6 +127,9 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
     setNewComments('');
   };
 
+  const currentUser = auth.getSession();
+  const isViewer = currentUser?.role === 'viewer';
+
   const totalRegistrations = rsvps.length;
   const countVolet1 = rsvps.filter((r) => r.volets.includes('volet-1')).length;
   const countVolet2 = rsvps.filter((r) => r.volets.includes('volet-2')).length;
@@ -190,22 +193,24 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                 <span>Suivi Live • /{invitation.slug}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1.5">
-                Participants &amp; Entreprises Enregistrées
+                Demandeurs d'emploi Enregistrés
               </h1>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold tracking-wider border border-slate-200 transition-colors shadow-xs"
-              >
-                <Plus className="w-4 h-4 text-indigo-600" />
-                <span>Ajout Manuel (Téléphone)</span>
-              </button>
+              {!isViewer && (
+                <button
+                  onClick={() => setIsAddModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold tracking-wider border border-slate-200 transition-colors shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-indigo-600" />
+                  <span>Ajout Manuel (Demandeur)</span>
+                </button>
+              )}
 
               <button
                 onClick={() => exportRSVPsToCSV(filteredRSVPs, invitation)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold tracking-wider transition-all shadow-sm shadow-emerald-500/20"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold tracking-wider transition-all shadow-sm shadow-emerald-500/20 cursor-pointer"
                 title="Exporter pour Microsoft Excel"
               >
                 <Download className="w-4 h-4 text-[#FCD116]" />
@@ -225,7 +230,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
               {totalRegistrations}
             </p>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              Entreprises enregistrées
+              Demandeurs enregistrés
             </p>
           </div>
 
@@ -261,7 +266,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
               {countBoth}
             </p>
             <p className="text-xs text-amber-700 mt-1 font-medium">
-              Participation intégrale
+              Participation aux 2 activités
             </p>
           </div>
         </div>
@@ -320,7 +325,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher entreprise, nom, tél..."
+              placeholder="Rechercher un demandeur, profil, N° PNPE..."
               className="w-full pl-9 pr-8 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 focus:bg-white text-slate-900"
             />
           </div>
@@ -333,12 +338,11 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
                   <th className="p-4">Date / Code</th>
-                  <th className="p-4">Entreprise</th>
-                  <th className="p-4">Représentant</th>
+                  <th className="p-4">Demandeur d'emploi</th>
+                  <th className="p-4">Profil</th>
                   <th className="p-4">Contacts / WhatsApp</th>
-                  <th className="p-4">Volets</th>
-                  <th className="p-4 text-center">Personnes</th>
-                  <th className="p-4">Besoins / Stand</th>
+                  <th className="p-4">Activités</th>
+                  <th className="p-4 text-center">N° PNPE</th>
                   <th className="p-4 text-right">Action</th>
                 </tr>
               </thead>
@@ -348,6 +352,13 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                   const whatsappUrl = `https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
                     `Bonjour ${r.participantName}, confirmation officielle de votre inscription PNPE pour l'événement (Réf: ${r.confirmationCode}).`
                   )}`;
+
+                  // Extraction du numéro PNPE
+                  const pnpeNumber = r.comments?.includes('Numéro PNPE :')
+                    ? r.comments.replace('Numéro PNPE :', '').trim()
+                    : r.company?.includes('N° PNPE:')
+                    ? r.company.split('N° PNPE:')[1]?.replace(')', '').trim()
+                    : '-';
 
                   return (
                     <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
@@ -361,12 +372,11 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                       </td>
 
                       <td className="p-4 font-bold text-slate-900">
-                        {r.company}
+                        {r.participantName}
                       </td>
 
                       <td className="p-4">
-                        <p className="font-semibold text-slate-900">{r.participantName}</p>
-                        <p className="text-[11px] text-slate-500">{r.jobTitle}</p>
+                        <p className="font-semibold text-slate-900">{r.jobTitle || 'Demandeur'}</p>
                       </td>
 
                       <td className="p-4 whitespace-nowrap">
@@ -376,15 +386,17 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                             <p className="text-[10px] text-slate-400">{r.email}</p>
                           </div>
                           
-                          <a
-                            href={whatsappUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="p-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors border border-emerald-200"
-                            title="Ouvrir WhatsApp directement"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                          </a>
+                          {r.phone && r.phone !== 'Non renseigné' && (
+                            <a
+                              href={whatsappUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="p-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors border border-emerald-200"
+                              title="Ouvrir WhatsApp directement"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                            </a>
+                          )}
                         </div>
                       </td>
 
@@ -392,42 +404,41 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                         <div className="flex flex-col gap-1">
                           {r.volets.includes('volet-1') && (
                             <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                              Activité 1 (Ven. 16)
+                              Activité 1
                             </span>
                           )}
                           {r.volets.includes('volet-2') && (
                             <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Activité 2 (Sam. 17)
+                              Activité 2
                             </span>
                           )}
                         </div>
                       </td>
 
-                      <td className="p-4 text-center whitespace-nowrap font-bold font-mono">
-                        {r.attendeesCount}
-                      </td>
-
-                      <td className="p-4 max-w-xs text-xs text-slate-500 italic">
-                        {r.comments || '-'}
+                      <td className="p-4 text-center whitespace-nowrap font-mono font-semibold text-slate-800">
+                        {pnpeNumber}
                       </td>
 
                       <td className="p-4 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => setBadgeRSVP(r)}
-                            className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 font-bold text-xs shadow-xs"
+                            className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 font-bold text-xs shadow-xs cursor-pointer"
                             title="Voir et télécharger le Badge PDF"
                           >
                             <IdCard className="w-3.5 h-3.5" />
                             <span>Badge</span>
                           </button>
-                          <button
-                            onClick={() => handleDeleteRSVP(r.id, r.company)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Supprimer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          
+                          {!isViewer && (
+                            <button
+                              onClick={() => handleDeleteRSVP(r.id, r.participantName || r.company)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

@@ -12,10 +12,12 @@ import {
   ExternalLink,
   Search,
   Menu,
-  X
+  X,
+  Shield
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { store } from '@/lib/store';
+import { AdminUser } from '@/lib/types';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -31,7 +33,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [activeSlug, setActiveSlug] = useState<string | null>(currentInvitationSlug || null);
 
@@ -68,32 +70,45 @@ export default function AdminLayout({
     router.push('/admin/login');
   };
 
+  const isViewer = user?.role === 'viewer';
+
   const navItems = [
     {
       label: 'Mes Activités',
       href: '/admin',
       icon: LayoutDashboard,
       active: pathname === '/admin',
+      show: true,
     },
     {
       label: 'Créer une Activité',
       href: '/admin/new',
       icon: PlusCircle,
       active: pathname === '/admin/new',
+      show: !isViewer,
     },
     {
-      label: 'Suivi Inscriptions (RSVP)',
+      label: 'Suivi Demandeurs (RSVP)',
       href: '/admin/rsvps',
       icon: Users,
       active: pathname.startsWith('/admin/rsvps') || pathname.includes('/rsvps'),
+      show: true,
     },
     {
       label: 'Générateur Kit E-mail',
       href: '/admin/email',
       icon: Mail,
       active: pathname.startsWith('/admin/email') || pathname.includes('/email'),
+      show: !isViewer,
     },
-  ];
+    {
+      label: 'Équipe & Accès',
+      href: '/admin/members',
+      icon: Shield,
+      active: pathname.startsWith('/admin/members'),
+      show: true,
+    },
+  ].filter((item) => item.show);
 
   if (isCheckingAuth) {
     return (
@@ -219,9 +234,31 @@ export default function AdminLayout({
                 <p className="text-xs font-bold text-white truncate">
                   {user?.name || 'Administrateur'}
                 </p>
-                <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  <span>Connecté</span>
+                <div className="flex items-center gap-1.5 text-[10px] font-medium mt-0.5">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      user?.role === 'viewer'
+                        ? 'bg-emerald-400'
+                        : user?.role === 'admin'
+                        ? 'bg-blue-400'
+                        : 'bg-amber-400'
+                    }`}
+                  ></span>
+                  <span
+                    className={
+                      user?.role === 'viewer'
+                        ? 'text-emerald-300'
+                        : user?.role === 'admin'
+                        ? 'text-blue-300'
+                        : 'text-amber-300'
+                    }
+                  >
+                    {user?.role === 'viewer'
+                      ? 'Lecteur Données'
+                      : user?.role === 'admin'
+                      ? 'Administrateur'
+                      : 'Super-Admin'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -263,13 +300,23 @@ export default function AdminLayout({
 
           {/* Bouton Action Primaire */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/admin/new"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/20 hover:scale-[1.02]"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Nouvelle Activité</span>
-            </Link>
+            {!isViewer ? (
+              <Link
+                href="/admin/new"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/20 hover:scale-[1.02]"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Nouvelle Activité</span>
+              </Link>
+            ) : (
+              <Link
+                href="/admin/rsvps"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-sm"
+              >
+                <Users className="w-4 h-4 text-emerald-400" />
+                <span>Consulter Inscrits</span>
+              </Link>
+            )}
           </div>
         </header>
 
