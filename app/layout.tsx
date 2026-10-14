@@ -16,9 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PNPE Invitation - Portail Officiel & Inscriptions",
+  title: "PNPE Activités - Portail Officiel & Inscriptions",
   description:
-    "Plateforme moderne d'invitations officielles et de suivi en temps réel des participants pour le Pôle National de Promotion de l'Emploi.",
+    "Plateforme officielle des activités et de suivi en temps réel des inscriptions pour le Pôle National de Promotion de l'Emploi (PNPE Gabon).",
 };
 
 export default function RootLayout({

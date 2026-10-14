@@ -70,13 +70,13 @@ export default function AdminLayout({
 
   const navItems = [
     {
-      label: 'Mes Invitations',
+      label: 'Mes Activités',
       href: '/admin',
       icon: LayoutDashboard,
       active: pathname === '/admin',
     },
     {
-      label: 'Créer une Invitation',
+      label: 'Créer une Activité',
       href: '/admin/new',
       icon: PlusCircle,
       active: pathname === '/admin/new',
@@ -255,7 +255,7 @@ export default function AdminLayout({
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Rechercher une invitation, un participant... (⌘K)"
+                placeholder="Rechercher une activité, un participant... (⌘K)"
                 className="w-full pl-10 pr-4 py-2 text-xs bg-slate-100/80 border border-slate-200/70 rounded-xl focus:bg-white focus:outline-none focus:border-indigo-600 text-slate-800 transition-all font-medium"
               />
             </div>
@@ -268,7 +268,7 @@ export default function AdminLayout({
               className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/20 hover:scale-[1.02]"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Nouvelle Invitation</span>
+              <span>Nouvelle Activité</span>
             </Link>
           </div>
         </header>

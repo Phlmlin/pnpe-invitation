@@ -144,7 +144,7 @@ export default function InvitationStudio({
 
   const handleDeleteVolet = (index: number) => {
     if (volets.length <= 1) {
-      alert('Une invitation doit comporter au moins une activité.');
+      alert('Vous devez configurer au moins une activité.');
       return;
     }
     setVolets((prev) => prev.filter((_, i) => i !== index));
@@ -153,7 +153,7 @@ export default function InvitationStudio({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      alert("Veuillez renseigner un titre pour l'invitation.");
+      alert("Veuillez renseigner un titre pour l'activité.");
       return;
     }
 
@@ -207,7 +207,7 @@ export default function InvitationStudio({
     if (!initialInvitation) return;
     if (
       window.confirm(
-        `Êtes-vous sûr de vouloir supprimer définitivement l'invitation "${initialInvitation.title}" ?`
+        `Êtes-vous sûr de vouloir supprimer définitivement l'activité "${initialInvitation.title}" ?`
       )
     ) {
       setSaving(true);
@@ -234,7 +234,7 @@ export default function InvitationStudio({
           </Link>
           <div>
             <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-              {isEditing ? "Modifier l'Invitation" : "Créer une Nouvelle Invitation"}
+              {isEditing ? "Modifier l'Activité" : "Créer une Nouvelle Activité"}
             </h1>
             <p className="text-xs text-slate-500">
               Configurez le titre, les activités avec leurs images respectives et le lien d'accès.
@@ -256,7 +256,7 @@ export default function InvitationStudio({
               onClick={handleDelete}
               disabled={saving}
               className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold uppercase tracking-wider transition-colors border border-rose-200 cursor-pointer"
-              title="Supprimer définitivement cette invitation"
+              title="Supprimer définitivement cette activité"
             >
               <Trash2 className="w-4 h-4 text-rose-600" />
               <span>Supprimer</span>
@@ -287,7 +287,7 @@ export default function InvitationStudio({
 
             <div>
               <label className="block text-xs font-bold uppercase text-slate-700 mb-1">
-                Titre de l'Invitation *
+                Titre de l'Activité *
               </label>
               <input
                 type="text"
@@ -625,11 +625,11 @@ export default function InvitationStudio({
 
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 shadow-modern-lg space-y-4">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black uppercase tracking-wider">
-              <span>INVITATION</span>
+              <span>ACTIVITÉ</span>
             </div>
 
             <h3 className="text-lg font-extrabold text-slate-900 leading-snug">
-              {title || "Titre de votre invitation..."}
+              {title || "Titre de votre activité..."}
             </h3>
 
             <div className="text-xs text-slate-500 font-mono pb-2 border-b border-slate-100 flex items-center justify-between">

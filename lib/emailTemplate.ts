@@ -144,7 +144,7 @@ export function generateWhatsAppMessage(invitation: Invitation, baseUrl: string)
   text += `*${invitation.title.toUpperCase()}*\n\n`;
   text += `Madame, Monsieur le Chef d'Entreprise / DRH,\n\n`;
   text += `${invitation.introMessage}\n\n`;
-  text += `📌 *PROGRAMME DES DEUX VOLETS :*\n\n`;
+  text += `📌 *PROGRAMME DES ACTIVITÉS :*\n\n`;
 
   invitation.volets.forEach((v) => {
     const isNegotiation = v.locationStatus === 'negotiation' ? ' _(Négociation en cours)_' : '';
@@ -155,7 +155,7 @@ export function generateWhatsAppMessage(invitation: Invitation, baseUrl: string)
   });
 
   text += `✍️ *CONFIRMATION DE PRÉSENCE (RSVP EN LIGNE) :*\n`;
-  text += `Veuillez sélectionner vos volets et enregistrer votre délégation sur le portail officiel :\n`;
+  text += `Veuillez sélectionner vos activités et valider votre inscription sur le portail officiel :\n`;
   text += `👉 ${inviteUrl}\n\n`;
   text += `_Direction Générale du PNPE - République Gabonaise_`;
 

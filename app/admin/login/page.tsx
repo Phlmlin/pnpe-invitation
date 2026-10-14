@@ -58,7 +58,7 @@ export default function AdminLoginPage() {
               Connexion Direction PNPE
             </h1>
             <p className="text-xs text-slate-500 mt-1.5">
-              Accès réservé pour créer les invitations et suivre les inscrits en direct
+              Accès réservé pour créer les activités et suivre les inscrits en direct
             </p>
           </div>
 
@@ -118,7 +118,7 @@ export default function AdminLoginPage() {
       </div>
 
       <footer className="border-t border-slate-200/80 py-4 text-center text-xs text-slate-400 font-medium">
-        Portail officiel d'invitations &amp; suivi • PNPE Gabon 2026
+        Portail officiel des activités &amp; inscriptions • PNPE Gabon 2026
       </footer>
     </div>
   );

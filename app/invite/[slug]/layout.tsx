@@ -16,8 +16,8 @@ export async function generateMetadata(
   const params = await props.params;
   const slug = params.slug;
 
-  const defaultTitle = "Invitation Officielle — Pôle National de Promotion de l'Emploi (PNPE)";
-  const defaultDesc = "Confirmez votre présence aux séquences officielles du PNPE Gabon.";
+  const defaultTitle = "Activité Officielle — Pôle National de Promotion de l'Emploi (PNPE)";
+  const defaultDesc = "Confirmez votre présence aux activités officielles du PNPE Gabon.";
 
   // Déterminer dynamiquement l'URL de base selon la requête entrante
   let baseUrl = 'https://pnpe-invitation.greenmoundounga.workers.dev';
@@ -55,7 +55,7 @@ export async function generateMetadata(
   const pageUrl = `${baseUrl}/invite/${slug}`;
 
   return {
-    title: `${invitation.title} — Invitation PNPE`,
+    title: `${invitation.title} — Activité PNPE`,
     description: description.slice(0, 200),
     openGraph: {
       title: invitation.title,

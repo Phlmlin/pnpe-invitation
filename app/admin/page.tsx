@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
   const handleDeleteInvitation = async (id: string, title: string) => {
     if (
       window.confirm(
-        `Êtes-vous sûr de vouloir supprimer définitivement l'invitation "${title}" ?\n\nToutes les inscriptions associées seront également supprimées de la base de données.`
+        `Êtes-vous sûr de vouloir supprimer définitivement l'activité "${title}" ?\n\nToutes les inscriptions associées seront également supprimées de la base de données.`
       )
     ) {
       try {
@@ -71,7 +71,7 @@ export default function AdminDashboardPage() {
         setTimeout(() => setDeletedToast(null), 3500);
       } catch (err) {
         console.error(err);
-        alert('Erreur lors de la suppression de l\'invitation.');
+        alert('Erreur lors de la suppression de l\'activité.');
       }
     }
   };
@@ -87,7 +87,7 @@ export default function AdminDashboardPage() {
   const getWhatsAppShareUrl = (inv: Invitation) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const url = `${origin}/invite/${inv.slug}`;
-    const message = `🏛️ *INVITATION OFFICIELLE PNPE*\n${inv.title}\n\nVeuillez confirmer votre participation et enregistrer votre entreprise via ce lien :\n👉 ${url}`;
+    const message = `🏛️ *ACTIVITÉ OFFICIELLE PNPE*\n${inv.title}\n\nVeuillez confirmer votre participation via ce lien :\n👉 ${url}`;
     return `https://wa.me/?text=${encodeURIComponent(message)}`;
   };
 
@@ -108,10 +108,10 @@ export default function AdminDashboardPage() {
               <span>Vue d'ensemble en temps réel</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              Tableau de Bord des Invitations
+              Tableau de Bord des Activités
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
-              Générez vos cartes, partagez vos liens d'invitation et suivez les confirmations d'entreprises.
+              Générez vos activités, partagez vos liens officiels et suivez les confirmations d'inscription.
             </p>
           </div>
 
@@ -120,7 +120,7 @@ export default function AdminDashboardPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 hover:scale-[1.02]"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Créer une Invitation</span>
+            <span>Créer une Activité</span>
           </Link>
         </div>
 
@@ -220,18 +220,18 @@ export default function AdminDashboardPage() {
               <Trash2 className="w-4 h-4 stroke-[2]" />
             </div>
             <div>
-              <p className="font-bold text-xs">Invitation supprimée</p>
-              <p className="text-[11px] text-slate-300">L'invitation a été définitivement supprimée.</p>
+              <p className="font-bold text-xs">Activité supprimée</p>
+              <p className="text-[11px] text-slate-300">L'activité a été définitivement supprimée.</p>
             </div>
           </div>
         )}
 
-        {/* LISTE DES INVITATIONS STYLE SAAS MODERNE */}
+        {/* LISTE DES ACTIVITÉS STYLE SAAS MODERNE */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
               <Layers className="w-4 h-4 text-indigo-600" />
-              <span>Vos Cartes d'Invitation ({invitations.length})</span>
+              <span>Vos Activités Programmées ({invitations.length})</span>
             </h2>
           </div>
 
@@ -242,10 +242,10 @@ export default function AdminDashboardPage() {
               </div>
               <div className="max-w-md">
                 <h3 className="text-base sm:text-lg font-bold text-slate-800">
-                  Aucune invitation active
+                  Aucune activité active
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                  Toutes les invitations ont été supprimées ou aucune n'a encore été créée.
+                  Toutes les activités ont été supprimées ou aucune n'a encore été créée.
                 </p>
               </div>
               <Link
@@ -253,7 +253,7 @@ export default function AdminDashboardPage() {
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 hover:scale-[1.02]"
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
-                <span>Créer une invitation</span>
+                <span>Créer une activité</span>
               </Link>
             </div>
           ) : (
@@ -297,7 +297,7 @@ export default function AdminDashboardPage() {
                           ● Active
                         </span>
                         <span className="text-xs text-slate-400 font-medium">
-                          {inv.volets.length} volets configurés
+                          {inv.volets.length} activité(s) configurée(s)
                         </span>
                       </div>
 

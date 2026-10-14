@@ -163,7 +163,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
     return (
       <AdminLayout>
         <div className="p-8 text-center">
-          <p className="text-slate-600 font-semibold">Invitation introuvable.</p>
+          <p className="text-slate-600 font-semibold">Activité introuvable.</p>
         </div>
       </AdminLayout>
     );
@@ -180,7 +180,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
             className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors mb-2 font-semibold"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Retour à Mes Invitations</span>
+            <span>Retour à Mes Activités</span>
           </Link>
 
           <div className="flex flex-wrap items-center justify-between gap-4">

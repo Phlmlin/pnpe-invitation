@@ -180,9 +180,9 @@ export default function GlobalRSVPsPage() {
             <Users className="w-8 h-8 text-indigo-500" />
           </div>
           <div className="max-w-md">
-            <h3 className="text-lg font-bold text-slate-800">Aucune invitation en cours</h3>
+            <h3 className="text-lg font-bold text-slate-800">Aucune activité en cours</h3>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Vous n'avez pas encore d'invitation active. Créez votre première invitation pour suivre les inscriptions de vos participants.
+              Vous n'avez pas encore d'activité active. Créez votre première activité pour suivre les inscriptions de vos participants.
             </p>
           </div>
           <Link
@@ -190,7 +190,7 @@ export default function GlobalRSVPsPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Créer une invitation</span>
+            <span>Créer une activité</span>
           </Link>
         </div>
       </AdminLayout>
@@ -247,11 +247,11 @@ export default function GlobalRSVPsPage() {
           </div>
         </div>
 
-        {/* SÉLECTEUR D'INVITATION (SI MULTIPLES) */}
+        {/* SÉLECTEUR D'ACTIVITÉ (SI MULTIPLES) */}
         {invitations.length > 1 && (
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <span className="text-xs font-bold uppercase text-slate-400 whitespace-nowrap mr-1">
-              Invitation :
+              Activité :
             </span>
             {invitations.map((inv) => (
               <button
@@ -269,7 +269,7 @@ export default function GlobalRSVPsPage() {
           </div>
         )}
 
-        {/* BANNIÈRE DE L'INVITATION SÉLECTIONNÉE */}
+        {/* BANNIÈRE DE L'ACTIVITÉ SÉLECTIONNÉE */}
         {selectedInvitation && (
           <div className="bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-3">
@@ -283,7 +283,7 @@ export default function GlobalRSVPsPage() {
                 <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                   <span className="font-mono text-indigo-600">/{selectedInvitation.slug}</span>
                   <span>•</span>
-                  <span>{selectedInvitation.volets.length} volets configurés</span>
+                  <span>{selectedInvitation.volets.length} activité(s) configurée(s)</span>
                 </div>
               </div>
             </div>

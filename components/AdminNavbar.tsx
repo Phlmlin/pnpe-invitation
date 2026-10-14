@@ -33,13 +33,13 @@ export default function AdminNavbar({
 
   const navItems = [
     {
-      label: 'Mes Invitations',
+      label: 'Mes Activités',
       href: '/admin',
       icon: LayoutDashboard,
       active: pathname === '/admin',
     },
     {
-      label: 'Créer une Invitation',
+      label: 'Créer une Activité',
       href: '/admin/new',
       icon: PlusCircle,
       active: pathname === '/admin/new',
@@ -76,7 +76,7 @@ export default function AdminNavbar({
               </span>
             </div>
             <p className="text-[11px] text-slate-400 font-medium">
-              Création d'invitations &amp; Partage de liens
+              Gestion des activités &amp; inscriptions
             </p>
           </div>
         </div>

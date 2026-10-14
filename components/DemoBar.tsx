@@ -27,7 +27,7 @@ export default function DemoBar() {
             <span>PNPE DIRECT</span>
           </div>
           <span className="hidden sm:inline text-slate-400 text-[11px] font-medium">
-            Plateforme d'invitations &amp; RSVP
+            Plateforme des activités &amp; inscriptions
           </span>
         </div>
 
@@ -41,7 +41,7 @@ export default function DemoBar() {
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>Vue Invité</span>
+            <span>Vue Participant</span>
           </Link>
 
           <Link

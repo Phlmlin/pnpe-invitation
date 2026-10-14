@@ -121,9 +121,9 @@ export default function GlobalAdminEmailPage() {
             <Mail className="w-8 h-8 text-indigo-500" />
           </div>
           <div className="max-w-md">
-            <h3 className="text-lg font-bold text-slate-800">Aucune invitation active</h3>
+            <h3 className="text-lg font-bold text-slate-800">Aucune activité active</h3>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Créez d'abord une invitation pour générer votre kit d'invitation e-mail et WhatsApp.
+              Créez d'abord une activité pour générer votre kit de diffusion e-mail et WhatsApp.
             </p>
           </div>
           <Link
@@ -131,7 +131,7 @@ export default function GlobalAdminEmailPage() {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Créer une invitation</span>
+            <span>Créer une activité</span>
           </Link>
         </div>
       </AdminLayout>
@@ -186,11 +186,11 @@ export default function GlobalAdminEmailPage() {
           </div>
         </div>
 
-        {/* SÉLECTEUR D'INVITATION (SI MULTIPLES) */}
+        {/* SÉLECTEUR D'ACTIVITÉ (SI MULTIPLES) */}
         {invitations.length > 1 && (
           <div className="flex items-center gap-2 overflow-x-auto pb-1">
             <span className="text-xs font-bold uppercase text-slate-400 whitespace-nowrap mr-1">
-              Invitation :
+              Activité :
             </span>
             {invitations.map((inv) => (
               <button

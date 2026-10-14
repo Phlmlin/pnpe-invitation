@@ -55,7 +55,7 @@ export default function AdminEditInvitationPage({ params }: AdminEditInvitationP
     return (
       <AdminLayout>
         <div className="p-8 text-center">
-          <p className="text-slate-600 font-semibold">Invitation introuvable.</p>
+          <p className="text-slate-600 font-semibold">Activité introuvable.</p>
         </div>
       </AdminLayout>
     );

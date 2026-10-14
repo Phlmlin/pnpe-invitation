@@ -77,7 +77,7 @@ export default function AdminEmailPage({ params }: AdminEmailPageProps) {
     return (
       <AdminLayout>
         <div className="p-8 text-center">
-          <p className="text-slate-600 font-semibold">Invitation introuvable.</p>
+          <p className="text-slate-600 font-semibold">Activité introuvable.</p>
         </div>
       </AdminLayout>
     );
@@ -139,7 +139,7 @@ export default function AdminEmailPage({ params }: AdminEmailPageProps) {
             className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors mb-2 font-mono"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Retour à Mes Invitations</span>
+            <span>Retour à Mes Activités</span>
           </Link>
 
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -148,7 +148,7 @@ export default function AdminEmailPage({ params }: AdminEmailPageProps) {
                 GÉNÉRATEUR DE DIFFUSION OFFICIELLE
               </span>
               <h1 className="font-serif text-2xl sm:text-3xl text-slate-900 mt-1">
-                Kit E-mail &amp; Template d'Invitation
+                Kit E-mail &amp; Template d'Activité
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 font-sans mt-0.5">
                 {invitation.title}
