@@ -424,16 +424,13 @@ export default function InvitePage({ params }: InvitePageProps) {
 
           {/* 3. FORMULAIRE D'INSCRIPTION DES PARTICIPANTS */}
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6 text-left">
-            <div className="space-y-2 pb-4 border-b border-slate-200/80">
+            <div className="pb-4 border-b border-slate-200/80 space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider">
                 <span>Étape 2 sur 2</span>
               </div>
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
-                Formulaire d'inscription des Participants
+                Formulaire d'inscription (Demandeurs d'emploi)
               </h2>
-              <p className="text-xs sm:text-sm text-slate-500">
-                Renseignez vos informations ci-dessous pour valider votre inscription aux activités sélectionnées :
-              </p>
             </div>
 
             {/* MESSAGE D'ERREUR */}
@@ -444,7 +441,7 @@ export default function InvitePage({ params }: InvitePageProps) {
               </div>
             )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* Nom (Obligatoire) */}
                     <div>
@@ -567,7 +564,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                     </p>
                   </div>
                 </form>
-          </div>
+              </div>
         </div>
       )}
 
