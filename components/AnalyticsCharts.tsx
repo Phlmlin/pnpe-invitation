@@ -10,20 +10,31 @@ interface AnalyticsChartsProps {
 
 /**
  * Regroupe un profil brut en grandes familles professionnelles
+ * selon un ordre de priorité strict.
  */
 export function groupProfile(rawProfile?: string | null): string {
-  // 1. Si le profil est vide ou null, retourne "Non renseigné"
+  // 0. Si le profil est vide ou null, retourne "Non renseigné"
   if (!rawProfile || !String(rawProfile).trim()) {
     return 'Non renseigné';
   }
 
   const trimmed = String(rawProfile).trim();
-  // 2. Convertis la chaîne en minuscules pour la vérification
+  // Normalisation en minuscules pour la vérification
   const lower = trimmed.toLowerCase();
 
-  // 3. Mots-clés (matching) pour regrouper par grandes familles
+  // 1. GRANDES FAMILLES (Priorité Haute)
+  // Intercepte les profils avant toute vérification du mot "assistant"
   if (lower.includes('comptable') || lower.includes('comptabilité') || lower.includes('comptabilite')) {
     return 'Comptable';
+  }
+  if (
+    lower.includes('logistique') ||
+    lower.includes('magasinier') ||
+    lower.includes('réceptionniste') ||
+    lower.includes('receptionniste') ||
+    lower.includes('logistic')
+  ) {
+    return 'Logistique';
   }
   if (
     lower.includes('informati') ||
@@ -35,17 +46,6 @@ export function groupProfile(rawProfile?: string | null): string {
   ) {
     return 'Informatique & IT';
   }
-  if (lower.includes('assistant')) {
-    return 'Assistant(e)';
-  }
-  if (
-    lower.includes('logistique') ||
-    lower.includes('magasinier') ||
-    lower.includes('réceptionniste') ||
-    lower.includes('receptionniste')
-  ) {
-    return 'Logistique';
-  }
   if (lower.includes('mécanicien') || lower.includes('mecanicien')) {
     return 'Mécanicien';
   }
@@ -53,7 +53,19 @@ export function groupProfile(rawProfile?: string | null): string {
     return 'Commercial / Vente';
   }
 
-  // 4. (Règle par défaut) Coupe au premier caractère spécial (virgule, slash, tiret du bas)
+  // 2. SPÉCIALITÉS D'ASSISTANAT (Priorité Moyenne)
+  if (lower.includes('assistant') && (lower.includes('rh') || lower.includes('ressource'))) {
+    return 'Assistant(e) RH';
+  }
+  if (lower.includes('assistant') && (lower.includes('admin') || lower.includes('direction'))) {
+    return 'Assistant(e) Administratif / Direction';
+  }
+  if (lower.includes('assistant') && (lower.includes('opérateur') || lower.includes('operateur'))) {
+    return 'Assistant Opérateur';
+  }
+
+  // 3. RÈGLE PAR DÉFAUT (Priorité Basse)
+  // Coupe la chaîne au premier caractère spécial (virgule, slash ou underscore)
   const mainPart = trimmed.split(/[,/_]/)[0].trim();
   if (!mainPart) {
     return 'Non renseigné';
