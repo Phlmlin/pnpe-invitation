@@ -363,7 +363,11 @@ export const store = {
     const supabase = getSupabaseClient();
     if (supabase) {
       try {
-        let query = supabase.from('rsvps').select('*').order('createdAt', { ascending: false });
+        let query = supabase
+          .from('rsvps')
+          .select('id, invitationId, confirmationCode, company, participantName, jobTitle, phone, email, volets, attendeesCount, comments, createdAt')
+          .order('createdAt', { ascending: false })
+          .limit(2000);
         if (invitationId) query = query.eq('invitationId', invitationId);
         const { data, error } = await query;
         if (!error && data) {

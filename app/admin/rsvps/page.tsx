@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -58,36 +58,108 @@ export default function GlobalRSVPsPage() {
   const [newAttendees, setNewAttendees] = useState(1);
   const [newComments, setNewComments] = useState('');
 
+  const selectedInvIdRef = useRef(selectedInvId);
+  useEffect(() => {
+    selectedInvIdRef.current = selectedInvId;
+  }, [selectedInvId]);
+
   useEffect(() => {
     if (!auth.isAuthenticated()) {
       router.push('/admin/login');
       return;
     }
 
-    async function loadData() {
-      const list = await store.getInvitations();
-      setInvitations(list);
+    // 1. Affichage instantané (0 ms) via le cache local (SWR) si disponible
+    if (typeof window !== 'undefined') {
+      try {
+        const rawInv = localStorage.getItem('pnpe_invitations_v1');
+        const rawRsvps = localStorage.getItem('pnpe_rsvps_v1');
+        if (rawInv) {
+          const parsedInv: Invitation[] = JSON.parse(rawInv);
+          if (Array.isArray(parsedInv) && parsedInv.length > 0) {
+            setInvitations(parsedInv);
+            const initId = parsedInv[0].id;
+            setSelectedInvId(initId);
+            selectedInvIdRef.current = initId;
 
-      if (list.length > 0) {
-        // Garder l'invitation déjà sélectionnée ou prendre la première
-        const currentId = selectedInvId && list.some((i) => i.id === selectedInvId)
-          ? selectedInvId
-          : list[0].id;
-        setSelectedInvId(currentId);
-        const dataRsvps = await store.getRSVPs(currentId);
-        setRsvps(dataRsvps);
-      } else {
-        setRsvps([]);
+            if (rawRsvps) {
+              const parsedRsvps: RSVPRegistration[] = JSON.parse(rawRsvps);
+              if (Array.isArray(parsedRsvps)) {
+                const forInv = parsedRsvps.filter((r) => r.invitationId === initId);
+                if (forInv.length > 0) {
+                  setRsvps(forInv);
+                  setLoading(false); // 0 ms d'attente pour l'utilisateur !
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // Fallback transparent
       }
-      setLoading(false);
+    }
+
+    let isMounted = true;
+
+    async function loadData() {
+      try {
+        const list = await store.getInvitations();
+        if (!isMounted) return;
+        setInvitations(list);
+
+        if (list.length > 0) {
+          const currentId =
+            selectedInvIdRef.current && list.some((i) => i.id === selectedInvIdRef.current)
+              ? selectedInvIdRef.current
+              : list[0].id;
+
+          if (selectedInvIdRef.current !== currentId) {
+            setSelectedInvId(currentId);
+            selectedInvIdRef.current = currentId;
+          }
+
+          const dataRsvps = await store.getRSVPs(currentId);
+          if (isMounted) {
+            setRsvps(dataRsvps);
+            setLoading(false);
+          }
+        } else {
+          if (isMounted) {
+            setRsvps([]);
+            setLoading(false);
+          }
+        }
+      } catch (err) {
+        console.warn('Erreur chargement données RSVPs:', err);
+        if (isMounted) setLoading(false);
+      }
     }
 
     loadData();
     return store.subscribe(loadData);
-  }, [router, selectedInvId]);
+  }, [router]);
 
   const handleSelectInvitation = async (id: string) => {
     setSelectedInvId(id);
+    selectedInvIdRef.current = id;
+
+    // Affichage instantané du cache local pour cette invitation si disponible
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('pnpe_rsvps_v1');
+        if (raw) {
+          const all = JSON.parse(raw);
+          const cached = all.filter((r: RSVPRegistration) => r.invitationId === id);
+          if (cached.length > 0) {
+            setRsvps(cached);
+          }
+        }
+      } catch {
+        // Fallback transparent
+      }
+    }
+
+    // Récupération Supabase en arrière-plan
     const dataRsvps = await store.getRSVPs(id);
     setRsvps(dataRsvps);
   };

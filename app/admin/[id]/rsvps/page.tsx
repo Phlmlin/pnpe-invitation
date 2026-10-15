@@ -69,19 +69,56 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
       return;
     }
 
-    async function loadData() {
-      setLoading(true);
-      let inv = await store.getInvitationById(invitationId);
-      if (!inv) {
-        inv = await store.getInvitationBySlug(invitationId);
+    // 1. Affichage instantané (0 ms) via le cache local (SWR) si disponible
+    if (typeof window !== 'undefined') {
+      try {
+        const rawInv = localStorage.getItem('pnpe_invitations_v1');
+        const rawRsvps = localStorage.getItem('pnpe_rsvps_v1');
+        if (rawInv) {
+          const parsedInv: Invitation[] = JSON.parse(rawInv);
+          const found = parsedInv.find((i) => i.id === invitationId || i.slug.toLowerCase() === invitationId.toLowerCase());
+          if (found) {
+            setInvitation(found);
+            if (rawRsvps) {
+              const parsedRsvps: RSVPRegistration[] = JSON.parse(rawRsvps);
+              if (Array.isArray(parsedRsvps)) {
+                const forInv = parsedRsvps.filter((r) => r.invitationId === found.id);
+                if (forInv.length > 0) {
+                  setRsvps(forInv);
+                  setLoading(false); // 0 ms d'attente !
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // Fallback transparent
       }
+    }
 
-      if (inv) {
-        setInvitation(inv);
-        const list = await store.getRSVPs(inv.id);
-        setRsvps(list);
+    let isMounted = true;
+
+    async function loadData() {
+      try {
+        let inv = await store.getInvitationById(invitationId);
+        if (!inv) {
+          inv = await store.getInvitationBySlug(invitationId);
+        }
+
+        if (inv && isMounted) {
+          setInvitation(inv);
+          const list = await store.getRSVPs(inv.id);
+          if (isMounted) {
+            setRsvps(list);
+            setLoading(false);
+          }
+        } else if (isMounted) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.warn('Erreur chargement RSVP invitation:', err);
+        if (isMounted) setLoading(false);
       }
-      setLoading(false);
     }
 
     loadData();
