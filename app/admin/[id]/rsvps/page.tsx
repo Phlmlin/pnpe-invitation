@@ -30,6 +30,7 @@ import { Invitation, RSVPRegistration } from '@/lib/types';
 import AdminLayout from '@/components/AdminLayout';
 import { exportRSVPsToCSV } from '@/lib/exportCsv';
 import ParticipantBadge from '@/components/ParticipantBadge';
+import AnalyticsCharts from '@/components/AnalyticsCharts';
 
 interface AdminRSVPsPageProps {
   params: Promise<{
@@ -46,7 +47,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
   const [rsvps, setRsvps] = useState<RSVPRegistration[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [filterTab, setFilterTab] = useState<'all' | 'volet-1' | 'volet-2' | 'both'>('all');
+  const [filterTab, setFilterTab] = useState<'all' | 'volet-1' | 'volet-2' | 'both' | 'with-pnpe' | 'without-pnpe'>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal Badge
@@ -131,22 +132,73 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
   const isViewer = currentUser?.role === 'viewer';
 
   const totalRegistrations = rsvps.length;
-  const countVolet1 = rsvps.filter((r) => r.volets.includes('volet-1')).length;
-  const countVolet2 = rsvps.filter((r) => r.volets.includes('volet-2')).length;
-  const countBoth = rsvps.filter((r) => r.volets.includes('volet-1') && r.volets.includes('volet-2')).length;
+  const countVolet1 = rsvps.filter((r) => r.volets && r.volets.includes('volet-1')).length;
+  const countVolet2 = rsvps.filter((r) => r.volets && r.volets.includes('volet-2')).length;
+  const countBoth = rsvps.filter((r) => r.volets && r.volets.includes('volet-1') && r.volets.includes('volet-2')).length;
+
+  // Extraction robuste du numéro PNPE
+  const getPnpeNumber = (r: RSVPRegistration): string => {
+    if (r.comments?.includes('Numéro PNPE :')) {
+      return r.comments.replace('Numéro PNPE :', '').trim();
+    }
+    if (r.company?.includes('N° PNPE:')) {
+      return r.company.split('N° PNPE:')[1]?.replace(')', '').trim();
+    }
+    return '';
+  };
+
+  const countWithPnpe = rsvps.filter((r) => {
+    const num = getPnpeNumber(r);
+    return !!num && num !== '-';
+  }).length;
+  const countWithoutPnpe = totalRegistrations - countWithPnpe;
+
+  // Numérotation incrémentale séquentielle en lecture seule (PNPE-AROM-XXXX)
+  const chronologicalOrder = [...rsvps].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+  const rsvpSeqMap = new Map(chronologicalOrder.map((r, i) => [r.id, i + 1]));
+
+  const getSequentialCode = (id: string) => {
+    const seq = rsvpSeqMap.get(id) || 1;
+    return `PNPE-AROM-${String(seq).padStart(4, '0')}`;
+  };
+
+  const getActivityTitle = (r: RSVPRegistration, inv?: Invitation | null): string => {
+    if (!inv || !inv.volets || inv.volets.length === 0) {
+      return 'Activité en cours';
+    }
+    if (inv.volets.length === 1) {
+      return inv.volets[0].title || inv.title || 'Activité 1';
+    }
+    const names: string[] = [];
+    if (r.volets?.includes('volet-1') && inv.volets[0]) {
+      names.push(inv.volets[0].title || 'Activité 1');
+    }
+    if (r.volets?.includes('volet-2') && inv.volets[1]) {
+      names.push(inv.volets[1].title || 'Activité 2');
+    }
+    return names.length > 0 ? names.join(' + ') : (inv.volets[0].title || 'Activité');
+  };
 
   const filteredRSVPs = rsvps.filter((r) => {
     if (filterTab === 'volet-1' && !r.volets.includes('volet-1')) return false;
     if (filterTab === 'volet-2' && !r.volets.includes('volet-2')) return false;
     if (filterTab === 'both' && !(r.volets.includes('volet-1') && r.volets.includes('volet-2'))) return false;
+    if (filterTab === 'with-pnpe' && !getPnpeNumber(r)) return false;
+    if (filterTab === 'without-pnpe' && !!getPnpeNumber(r)) return false;
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const matchComp = r.company.toLowerCase().includes(q);
-      const matchName = r.participantName.toLowerCase().includes(q);
-      const matchPhone = r.phone.toLowerCase().includes(q);
-      const matchEmail = r.email.toLowerCase().includes(q);
-      return matchComp || matchName || matchPhone || matchEmail;
+      const matchComp = (r.company || '').toLowerCase().includes(q);
+      const matchName = (r.participantName || '').toLowerCase().includes(q);
+      const matchJob = (r.jobTitle || '').toLowerCase().includes(q);
+      const matchPhone = (r.phone || '').toLowerCase().includes(q);
+      const matchEmail = (r.email || '').toLowerCase().includes(q);
+      const matchComments = (r.comments || '').toLowerCase().includes(q);
+      const matchPnpe = getPnpeNumber(r).toLowerCase().includes(q);
+      const matchSeq = getSequentialCode(r.id).toLowerCase().includes(q);
+      return matchComp || matchName || matchJob || matchPhone || matchEmail || matchComments || matchPnpe || matchSeq;
     }
 
     return true;
@@ -221,102 +273,181 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
         </div>
 
         {/* LES 4 CARTES KPI MODERNES */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <div className="p-5 rounded-3xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-modern">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-              Total Inscrits
-            </span>
-            <p className="text-3xl font-extrabold text-slate-900 tabular-nums">
-              {totalRegistrations}
-            </p>
-            <p className="text-xs text-slate-500 mt-1 font-medium">
-              Demandeurs enregistrés
-            </p>
-          </div>
+        {(() => {
+          const isSingleActivity = !invitation || invitation.volets.length <= 1 || countVolet2 === 0;
+          const v1Volet = invitation?.volets?.[0];
+          const v1Subtitle = v1Volet
+            ? `${v1Volet.location || 'Centre Culturel'}${v1Volet.date ? ` (${new Date(v1Volet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
+            : 'Activité principale';
+          const v2Volet = invitation?.volets?.[1];
+          const v2Subtitle = v2Volet
+            ? `${v2Volet.location || 'Deuxième site'}${v2Volet.date ? ` (${new Date(v2Volet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
+            : 'Deuxième activité';
 
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-blue-50/90 to-indigo-50/60 border border-blue-200/80 shadow-modern">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block mb-1">
-              Activité 1 (Ven. 16/10)
-            </span>
-            <p className="text-3xl font-extrabold text-blue-900 tabular-nums">
-              {countVolet1}
-            </p>
-            <p className="text-xs text-blue-700 mt-1 font-medium">
-              Présentation Forum Paris
-            </p>
-          </div>
+          return (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <div className="p-5 rounded-3xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-modern">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Total Inscrits
+                </span>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">
+                  {totalRegistrations}
+                </p>
+                <p className="text-xs text-slate-500 mt-1 font-medium">
+                  Demandeurs enregistrés
+                </p>
+              </div>
 
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/80 shadow-modern">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
-              Activité 2 (Sam. 17/10)
-            </span>
-            <p className="text-3xl font-extrabold text-emerald-900 tabular-nums">
-              {countVolet2}
-            </p>
-            <p className="text-xs text-emerald-700 mt-1 font-medium">
-              Mini-salon de l'emploi
-            </p>
-          </div>
+              <div className="p-5 rounded-3xl bg-gradient-to-br from-blue-50/90 to-indigo-50/60 border border-blue-200/80 shadow-modern">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-700 block mb-1">
+                  Inscrits Activité 1
+                </span>
+                <p className="text-3xl font-extrabold text-blue-900 tabular-nums">
+                  {countVolet1}
+                </p>
+                <p className="text-xs text-blue-700 mt-1 font-medium truncate" title={v1Subtitle}>
+                  {v1Subtitle}
+                </p>
+              </div>
 
-          <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/80 shadow-modern">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
-              Toutes les Activités
-            </span>
-            <p className="text-3xl font-extrabold text-amber-900 tabular-nums">
-              {countBoth}
-            </p>
-            <p className="text-xs text-amber-700 mt-1 font-medium">
-              Participation aux 2 activités
-            </p>
-          </div>
-        </div>
+              {isSingleActivity ? (
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/80 shadow-modern">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                    Immatriculés PNPE
+                  </span>
+                  <p className="text-3xl font-extrabold text-emerald-900 tabular-nums">
+                    {countWithPnpe}
+                  </p>
+                  <p className="text-xs text-emerald-700 mt-1 font-medium">
+                    Avec N° PNPE renseigné
+                  </p>
+                </div>
+              ) : (
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50/90 to-teal-50/60 border border-emerald-200/80 shadow-modern">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 block mb-1">
+                    Inscrits Activité 2
+                  </span>
+                  <p className="text-3xl font-extrabold text-emerald-900 tabular-nums">
+                    {countVolet2}
+                  </p>
+                  <p className="text-xs text-emerald-700 mt-1 font-medium truncate" title={v2Subtitle}>
+                    {v2Subtitle}
+                  </p>
+                </div>
+              )}
+
+              {isSingleActivity ? (
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/80 shadow-modern">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+                    Sans N° PNPE
+                  </span>
+                  <p className="text-3xl font-extrabold text-amber-900 tabular-nums">
+                    {countWithoutPnpe}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1 font-medium">
+                    À immatriculer / accompagner
+                  </p>
+                </div>
+              ) : (
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 to-orange-50/60 border border-amber-200/80 shadow-modern">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+                    Les Deux Activités
+                  </span>
+                  <p className="text-3xl font-extrabold text-amber-900 tabular-nums">
+                    {countBoth}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-1 font-medium">
+                    Participation aux 2 activités
+                  </p>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* 2 GRAPHIQUES VISUELS EN TEMPS RÉEL (SVG NATIF & TAILWIND) */}
+        <AnalyticsCharts rsvps={rsvps} />
 
         {/* FILTRES & RECHERCHE */}
         <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-4 mb-6 shadow-xs flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-            <button
-              onClick={() => setFilterTab('all')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                filterTab === 'all'
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-              }`}
-            >
-              Tous ({totalRegistrations})
-            </button>
-
-            <button
-              onClick={() => setFilterTab('volet-1')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                filterTab === 'volet-1'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-              }`}
-            >
-              Activité 1 ({countVolet1})
-            </button>
-
-            <button
-              onClick={() => setFilterTab('volet-2')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                filterTab === 'volet-2'
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-              }`}
-            >
-              Activité 2 ({countVolet2})
-            </button>
-
-            <button
-              onClick={() => setFilterTab('both')}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
-                filterTab === 'both'
-                  ? 'bg-amber-600 text-white shadow-xs'
-                  : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
-              }`}
-            >
-              Les 2 Activités ({countBoth})
-            </button>
+            {(!invitation || invitation.volets.length <= 1 || countVolet2 === 0) ? (
+              <>
+                <button
+                  onClick={() => setFilterTab('all')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'all'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Tous ({totalRegistrations})
+                </button>
+                <button
+                  onClick={() => setFilterTab('with-pnpe')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'with-pnpe'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  }`}
+                >
+                  Avec N° PNPE ({countWithPnpe})
+                </button>
+                <button
+                  onClick={() => setFilterTab('without-pnpe')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'without-pnpe'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                  }`}
+                >
+                  Sans N° PNPE ({countWithoutPnpe})
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setFilterTab('all')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'all'
+                      ? 'bg-slate-900 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Tous ({totalRegistrations})
+                </button>
+                <button
+                  onClick={() => setFilterTab('volet-1')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'volet-1'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  }`}
+                >
+                  Activité 1 ({countVolet1})
+                </button>
+                <button
+                  onClick={() => setFilterTab('volet-2')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'volet-2'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                  }`}
+                >
+                  Activité 2 ({countVolet2})
+                </button>
+                <button
+                  onClick={() => setFilterTab('both')}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap ${
+                    filterTab === 'both'
+                      ? 'bg-amber-600 text-white shadow-xs'
+                      : 'bg-amber-50 text-amber-800 hover:bg-amber-100'
+                  }`}
+                >
+                  Les 2 Activités ({countBoth})
+                </button>
+              </>
+            )}
           </div>
 
           <div className="relative min-w-[280px]">
@@ -337,113 +468,81 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-                  <th className="p-4">Date / Code</th>
-                  <th className="p-4">Demandeur d'emploi</th>
-                  <th className="p-4">Profil</th>
-                  <th className="p-4">Contacts / WhatsApp</th>
-                  <th className="p-4">Activités</th>
-                  <th className="p-4 text-center">N° PNPE</th>
-                  <th className="p-4 text-right">Action</th>
+                  <th className="py-4 px-6">Demandeur d'emploi</th>
+                  <th className="py-4 px-6">Profil</th>
+                  <th className="py-4 px-6">Activité Choisie</th>
+                  <th className="py-4 px-6 text-center">N° PNPE</th>
+                  <th className="py-4 px-6 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
-                {filteredRSVPs.map((r) => {
-                  const cleanPhone = r.phone.replace(/[^0-9+]/g, '');
-                  const whatsappUrl = `https://wa.me/${cleanPhone.replace('+', '')}?text=${encodeURIComponent(
-                    `Bonjour ${r.participantName}, confirmation officielle de votre inscription PNPE pour l'événement (Réf: ${r.confirmationCode}).`
-                  )}`;
+                {filteredRSVPs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                      Aucun demandeur enregistré pour ce filtre.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRSVPs.map((r) => {
+                    const pnpeNumber = getPnpeNumber(r);
+                    const seqCode = getSequentialCode(r.id);
+                    const activityName = getActivityTitle(r, invitation);
 
-                  // Extraction du numéro PNPE
-                  const pnpeNumber = r.comments?.includes('Numéro PNPE :')
-                    ? r.comments.replace('Numéro PNPE :', '').trim()
-                    : r.company?.includes('N° PNPE:')
-                    ? r.company.split('N° PNPE:')[1]?.replace(')', '').trim()
-                    : '-';
+                    return (
+                      <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                        {/* DEMANDEUR D'EMPLOI */}
+                        <td className="py-4 px-6">
+                          <p className="font-extrabold text-slate-900 text-sm">{r.participantName}</p>
+                          <span className="font-mono text-[10px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200/60 mt-1 inline-block font-bold">
+                            {seqCode}
+                          </span>
+                        </td>
 
-                  return (
-                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="p-4 whitespace-nowrap">
-                        <p className="font-bold text-slate-900 font-mono">
-                          {new Date(r.createdAt).toLocaleDateString('fr-FR')}
-                        </p>
-                        <span className="font-mono text-[10px] text-indigo-600 font-bold">
-                          {r.confirmationCode}
-                        </span>
-                      </td>
+                        {/* PROFIL */}
+                        <td className="py-4 px-6">
+                          <p className="font-bold text-slate-800">{r.jobTitle || 'Demandeur d\'emploi'}</p>
+                          <p className="text-[11px] text-slate-400">
+                            Inscrit le {new Date(r.createdAt).toLocaleDateString('fr-FR')}
+                          </p>
+                        </td>
 
-                      <td className="p-4 font-bold text-slate-900">
-                        {r.participantName}
-                      </td>
-
-                      <td className="p-4">
-                        <p className="font-semibold text-slate-900">{r.jobTitle || 'Demandeur'}</p>
-                      </td>
-
-                      <td className="p-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <div>
-                            <p className="font-mono text-slate-800 text-[11px]">{r.phone}</p>
-                            <p className="text-[10px] text-slate-400">{r.email}</p>
-                          </div>
-                          
-                          {r.phone && r.phone !== 'Non renseigné' && (
-                            <a
-                              href={whatsappUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="p-1.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white transition-colors border border-emerald-200"
-                              title="Ouvrir WhatsApp directement"
-                            >
-                              <MessageCircle className="w-3.5 h-3.5" />
-                            </a>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="p-4 whitespace-nowrap">
-                        <div className="flex flex-col gap-1">
-                          {r.volets.includes('volet-1') && (
-                            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                              Activité 1
-                            </span>
-                          )}
-                          {r.volets.includes('volet-2') && (
-                            <span className="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Activité 2
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      <td className="p-4 text-center whitespace-nowrap font-mono font-semibold text-slate-800">
-                        {pnpeNumber}
-                      </td>
-
-                      <td className="p-4 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setBadgeRSVP(r)}
-                            className="px-2.5 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white transition-all inline-flex items-center gap-1 font-bold text-xs shadow-xs cursor-pointer"
-                            title="Voir et télécharger le Badge PDF"
+                        {/* ACTIVITÉ CHOISIE */}
+                        <td className="py-4 px-6">
+                          <span
+                            className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80 inline-block max-w-xs truncate shadow-2xs"
+                            title={activityName}
                           >
-                            <IdCard className="w-3.5 h-3.5" />
-                            <span>Badge</span>
-                          </button>
-                          
+                            {activityName}
+                          </span>
+                        </td>
+
+                        {/* N° PNPE */}
+                        <td className="py-4 px-6 text-center font-mono text-xs text-slate-700 font-semibold">
+                          {pnpeNumber ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[11px]">
+                              {pnpeNumber}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+
+                        {/* ACTIONS */}
+                        <td className="py-4 px-6 text-right whitespace-nowrap">
                           {!isViewer && (
                             <button
                               onClick={() => handleDeleteRSVP(r.id, r.participantName || r.company)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                              title="Supprimer"
+                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Supprimer ce demandeur"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

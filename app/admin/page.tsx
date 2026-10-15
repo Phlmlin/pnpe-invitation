@@ -25,13 +25,15 @@ import {
 } from 'lucide-react';
 import { store } from '@/lib/store';
 import { auth } from '@/lib/auth';
-import { Invitation, AdminUser } from '@/lib/types';
+import { Invitation, AdminUser, RSVPRegistration } from '@/lib/types';
 import AdminLayout from '@/components/AdminLayout';
+import AnalyticsCharts from '@/components/AnalyticsCharts';
 
 export default function AdminDashboardPage() {
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [statsMap, setStatsMap] = useState<Record<string, { total: number; v1: number; v2: number; both: number; attendees: number }>>({});
+  const [allRSVPs, setAllRSVPs] = useState<RSVPRegistration[]>([]);
+  const [statsMap, setStatsMap] = useState<Record<string, { total: number; v1: number; v2: number; both: number; attendees: number; withPnpe: number; withoutPnpe: number }>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deletedToast, setDeletedToast] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,17 +45,34 @@ export default function AdminDashboardPage() {
       const list = await store.getInvitations();
       setInvitations(list);
 
-      const stats: Record<string, { total: number; v1: number; v2: number; both: number; attendees: number }> = {};
+      const stats: Record<string, { total: number; v1: number; v2: number; both: number; attendees: number; withPnpe: number; withoutPnpe: number }> = {};
+      const collected: RSVPRegistration[] = [];
+
       for (const inv of list) {
         const s = await store.getStats(inv.id);
+        const rsvps = await store.getRSVPs(inv.id);
+        collected.push(...rsvps);
+
+        const withPnpe = rsvps.filter((r) => {
+          const num = r.comments?.includes('Numéro PNPE :')
+            ? r.comments.replace('Numéro PNPE :', '').trim()
+            : r.company?.includes('N° PNPE:')
+            ? r.company.split('N° PNPE:')[1]?.replace(')', '').trim()
+            : '';
+          return !!num && num !== '-';
+        }).length;
+
         stats[inv.id] = {
           total: s.totalCompanies,
           v1: s.volet1Count,
           v2: s.volet2Count,
           both: s.bothVoletsCount,
           attendees: s.totalAttendees,
+          withPnpe,
+          withoutPnpe: s.totalCompanies - withPnpe,
         };
       }
+      setAllRSVPs(collected);
       setStatsMap(stats);
       setLoading(false);
     }
@@ -100,6 +119,19 @@ export default function AdminDashboardPage() {
   const totalVolet1All = Object.values(statsMap).reduce((acc, curr) => acc + curr.v1, 0);
   const totalVolet2All = Object.values(statsMap).reduce((acc, curr) => acc + curr.v2, 0);
   const totalBothAll = Object.values(statsMap).reduce((acc, curr) => acc + curr.both, 0);
+  const totalWithPnpeAll = Object.values(statsMap).reduce((acc, curr) => acc + (curr.withPnpe || 0), 0);
+  const totalWithoutPnpeAll = totalCompaniesAll - totalWithPnpeAll;
+
+  const isSingleActivityAll = totalVolet2All === 0 || invitations.every((inv) => !inv.volets || inv.volets.length <= 1);
+  const firstInv = invitations[0];
+  const firstVolet = firstInv?.volets?.[0];
+  const v1SubtitleAll = firstVolet
+    ? `${firstVolet.location || 'Centre Culturel'}${firstVolet.date ? ` (${new Date(firstVolet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
+    : 'Activité principale';
+  const secondVolet = firstInv?.volets?.[1];
+  const v2SubtitleAll = secondVolet
+    ? `${secondVolet.location || 'Deuxième site'}${secondVolet.date ? ` (${new Date(secondVolet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
+    : 'Deuxième activité';
 
   return (
     <AdminLayout>
@@ -161,8 +193,8 @@ export default function AdminDashboardPage() {
               <p className="text-2xl sm:text-3xl font-extrabold text-blue-900 mt-1 tabular-nums">
                 {totalVolet1All}
               </p>
-              <span className="text-[11px] text-blue-600 font-medium mt-1 block">
-                Présentation Paris (16/10)
+              <span className="text-[11px] text-blue-600 font-medium mt-1 block truncate max-w-[170px]" title={v1SubtitleAll}>
+                {v1SubtitleAll}
               </span>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-xs">
@@ -170,42 +202,83 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Métrique 3 : Inscrits Activité 2 */}
-          <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
-                INSCRITS ACTIVITÉ 2
-              </p>
-              <p className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1 tabular-nums">
-                {totalVolet2All}
-              </p>
-              <span className="text-[11px] text-emerald-600 font-medium mt-1 block">
-                Mini-salon emploi (17/10)
-              </span>
+          {/* Métrique 3 : Inscrits Activité 2 ou Immatriculés PNPE */}
+          {isSingleActivityAll ? (
+            <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                  IMMATRICULÉS PNPE
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1 tabular-nums">
+                  {totalWithPnpeAll}
+                </p>
+                <span className="text-[11px] text-emerald-600 font-medium mt-1 block">
+                  Avec N° PNPE renseigné
+                </span>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-xs">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-xs">
-              <Briefcase className="w-6 h-6" />
+          ) : (
+            <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+                  INSCRITS ACTIVITÉ 2
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-emerald-900 mt-1 tabular-nums">
+                  {totalVolet2All}
+                </p>
+                <span className="text-[11px] text-emerald-600 font-medium mt-1 block truncate max-w-[170px]" title={v2SubtitleAll}>
+                  {v2SubtitleAll}
+                </span>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shadow-xs">
+                <Briefcase className="w-6 h-6" />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Métrique 4 : Les Deux Activités */}
-          <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
-                LES DEUX ACTIVITÉS
-              </p>
-              <p className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1 tabular-nums">
-                {totalBothAll}
-              </p>
-              <span className="text-[11px] text-amber-600 font-medium mt-1 block">
-                Présence aux 2 journées
-              </span>
+          {/* Métrique 4 : Les Deux Activités ou Sans N° PNPE */}
+          {isSingleActivityAll ? (
+            <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  SANS N° PNPE
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1 tabular-nums">
+                  {totalWithoutPnpeAll}
+                </p>
+                <span className="text-[11px] text-amber-600 font-medium mt-1 block">
+                  À immatriculer / accompagner
+                </span>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
+                <Building2 className="w-6 h-6" />
+              </div>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
-              <Building2 className="w-6 h-6" />
+          ) : (
+            <div className="bg-white/90 backdrop-blur-md p-5 rounded-2xl border border-slate-200/80 shadow-modern hover:shadow-modern-lg transition-all flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-700">
+                  LES DEUX ACTIVITÉS
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold text-amber-900 mt-1 tabular-nums">
+                  {totalBothAll}
+                </p>
+                <span className="text-[11px] text-amber-600 font-medium mt-1 block">
+                  Présence aux 2 journées
+                </span>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 shadow-xs">
+                <Building2 className="w-6 h-6" />
+              </div>
             </div>
-          </div>
+          )}
         </div>
+
+        {/* 2 GRAPHIQUES VISUELS EN TEMPS RÉEL (SVG NATIF & TAILWIND) */}
+        <AnalyticsCharts rsvps={allRSVPs} />
 
         {/* NOTIFICATION TOAST FLOTTANTE (COPIE) */}
         {copiedId && (
