@@ -52,7 +52,7 @@ export default function InvitePage({ params }: InvitePageProps) {
       const data = await store.getInvitationBySlug(slug);
       if (data) {
         setInvitation(data);
-        // Par défaut, présélectionner toutes les activités de l'invitation
+        // Par défaut, présélectionner automatiquement l'activité de l'invitation
         if (data.volets && data.volets.length > 0) {
           setSelectedVolets(data.volets.map((v) => v.id));
         }
@@ -61,6 +61,16 @@ export default function InvitePage({ params }: InvitePageProps) {
     }
     loadInvitation();
   }, [slug]);
+
+  // Si une seule activité est configurée, s'assurer qu'elle est toujours cochée par défaut
+  useEffect(() => {
+    if (invitation && invitation.volets && invitation.volets.length === 1) {
+      const singleId = invitation.volets[0].id;
+      if (!selectedVolets.includes(singleId)) {
+        setSelectedVolets([singleId]);
+      }
+    }
+  }, [invitation, selectedVolets]);
 
   if (loading) {
     return (
@@ -93,6 +103,11 @@ export default function InvitePage({ params }: InvitePageProps) {
 
   const handleToggleVolet = (id: string) => {
     setErrorMessage(null);
+    // S'il n'y a qu'une seule activité, elle reste cochée par défaut
+    if (invitation && invitation.volets.length === 1) {
+      setSelectedVolets([id]);
+      return;
+    }
     setSelectedVolets((prev) => {
       if (prev.includes(id)) {
         return prev.filter((vId) => vId !== id);
@@ -369,12 +384,9 @@ export default function InvitePage({ params }: InvitePageProps) {
           {/* 2. SÉLECTION DES ACTIVITÉS */}
           <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider mb-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider">
                 <span>Étape 1 sur 2</span>
               </div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
-                Veuillez sélectionner l’activité qui vous intéresse
-              </h2>
             </div>
 
             {/* Grille en 2 colonnes distinctes : Grandes affiches à gauche | Cartes d'informations à droite */}
@@ -429,7 +441,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                 <span>Étape 2 sur 2</span>
               </div>
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
-                Formulaire d'inscription des Demandeurs d'emploi
+                Inscrivez-vous pour participer
               </h2>
             </div>
 
