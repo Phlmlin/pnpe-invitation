@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { auth } from '@/lib/auth';
 import { store } from '@/lib/store';
-import { Invitation, RSVPRegistration } from '@/lib/types';
+import { Invitation, RSVPRegistration, VoletConfig } from '@/lib/types';
 import AdminLayout from '@/components/AdminLayout';
 import { exportRSVPsToCSV } from '@/lib/exportCsv';
 import ParticipantBadge from '@/components/ParticipantBadge';
@@ -189,7 +189,8 @@ export default function GlobalRSVPsPage() {
     return names.length > 0 ? names.join(' + ') : (inv.volets[0].title || 'Activité');
   };
 
-  const filteredRSVPs = rsvps.filter((r) => {
+  // Tri chronologique croissant : le 1er inscrit (PNPE-AROM-0001) en haut, le dernier en bas
+  const filteredRSVPs = chronologicalOrder.filter((r) => {
     if (filterTab === 'volet-1' && !(r.volets && r.volets.includes('volet-1'))) return false;
     if (filterTab === 'volet-2' && !(r.volets && r.volets.includes('volet-2'))) return false;
     if (
@@ -292,7 +293,7 @@ export default function GlobalRSVPsPage() {
 
               {selectedInvitation && (
                 <button
-                  onClick={() => exportRSVPsToCSV(filteredRSVPs, selectedInvitation)}
+                  onClick={() => exportRSVPsToCSV(filteredRSVPs, selectedInvitation, rsvps)}
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold tracking-wider transition-all shadow-sm shadow-emerald-500/20 cursor-pointer"
                   title="Exporter pour Microsoft Excel"
                 >
@@ -359,14 +360,26 @@ export default function GlobalRSVPsPage() {
         {/* LES 4 CARTES KPI MODERNES */}
         {(() => {
           const isSingleActivity = !selectedInvitation || selectedInvitation.volets.length <= 1 || countVolet2 === 0;
+
+          const formatVoletSubtitle = (volet?: VoletConfig | null, defaultLoc = 'Activité principale') => {
+            if (!volet) return defaultLoc;
+            const loc = volet.location || defaultLoc;
+            if (!volet.date) return loc;
+            const dateToParse = volet.date.includes('T') ? volet.date : `${volet.date}T00:00:00`;
+            const parsed = new Date(dateToParse);
+            if (!isNaN(parsed.getTime())) {
+              const formatted = parsed.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+              if (formatted && formatted !== 'Invalid Date') {
+                return `${loc} (${formatted})`;
+              }
+            }
+            return loc;
+          };
+
           const v1Volet = selectedInvitation?.volets?.[0];
-          const v1Subtitle = v1Volet
-            ? `${v1Volet.location || 'Centre Culturel'}${v1Volet.date ? ` (${new Date(v1Volet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
-            : 'Activité principale';
+          const v1Subtitle = formatVoletSubtitle(v1Volet, 'Activité principale');
           const v2Volet = selectedInvitation?.volets?.[1];
-          const v2Subtitle = v2Volet
-            ? `${v2Volet.location || 'Deuxième site'}${v2Volet.date ? ` (${new Date(v2Volet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
-            : 'Deuxième activité';
+          const v2Subtitle = formatVoletSubtitle(v2Volet, 'Deuxième activité');
 
           return (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

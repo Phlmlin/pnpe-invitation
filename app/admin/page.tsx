@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { store } from '@/lib/store';
 import { auth } from '@/lib/auth';
-import { Invitation, AdminUser, RSVPRegistration } from '@/lib/types';
+import { Invitation, AdminUser, RSVPRegistration, VoletConfig } from '@/lib/types';
 import AdminLayout from '@/components/AdminLayout';
 import AnalyticsCharts from '@/components/AnalyticsCharts';
 
@@ -125,13 +125,24 @@ export default function AdminDashboardPage() {
   const isSingleActivityAll = totalVolet2All === 0 || invitations.every((inv) => !inv.volets || inv.volets.length <= 1);
   const firstInv = invitations[0];
   const firstVolet = firstInv?.volets?.[0];
-  const v1SubtitleAll = firstVolet
-    ? `${firstVolet.location || 'Centre Culturel'}${firstVolet.date ? ` (${new Date(firstVolet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
-    : 'Activité principale';
+  const formatVoletSubtitle = (volet?: VoletConfig | null, defaultLoc = 'Activité principale') => {
+    if (!volet) return defaultLoc;
+    const loc = volet.location || defaultLoc;
+    if (!volet.date) return loc;
+    const dateToParse = volet.date.includes('T') ? volet.date : `${volet.date}T00:00:00`;
+    const parsed = new Date(dateToParse);
+    if (!isNaN(parsed.getTime())) {
+      const formatted = parsed.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      if (formatted && formatted !== 'Invalid Date') {
+        return `${loc} (${formatted})`;
+      }
+    }
+    return loc;
+  };
+
+  const v1SubtitleAll = formatVoletSubtitle(firstVolet, 'Activité principale');
   const secondVolet = firstInv?.volets?.[1];
-  const v2SubtitleAll = secondVolet
-    ? `${secondVolet.location || 'Deuxième site'}${secondVolet.date ? ` (${new Date(secondVolet.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })})` : ''}`
-    : 'Deuxième activité';
+  const v2SubtitleAll = formatVoletSubtitle(secondVolet, 'Deuxième activité');
 
   return (
     <AdminLayout>
