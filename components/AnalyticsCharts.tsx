@@ -8,6 +8,59 @@ interface AnalyticsChartsProps {
   rsvps: RSVPRegistration[];
 }
 
+/**
+ * Regroupe un profil brut en grandes familles professionnelles
+ */
+export function groupProfile(rawProfile?: string | null): string {
+  // 1. Si le profil est vide ou null, retourne "Non renseigné"
+  if (!rawProfile || !String(rawProfile).trim()) {
+    return 'Non renseigné';
+  }
+
+  const trimmed = String(rawProfile).trim();
+  // 2. Convertis la chaîne en minuscules pour la vérification
+  const lower = trimmed.toLowerCase();
+
+  // 3. Mots-clés (matching) pour regrouper par grandes familles
+  if (lower.includes('comptable') || lower.includes('comptabilité') || lower.includes('comptabilite')) {
+    return 'Comptable';
+  }
+  if (
+    lower.includes('informati') ||
+    lower.includes('développeur') ||
+    lower.includes('developpeur') ||
+    lower.includes('devellop') ||
+    lower.includes('réseau') ||
+    lower.includes('reseau')
+  ) {
+    return 'Informatique & IT';
+  }
+  if (lower.includes('assistant')) {
+    return 'Assistant(e)';
+  }
+  if (
+    lower.includes('logistique') ||
+    lower.includes('magasinier') ||
+    lower.includes('réceptionniste') ||
+    lower.includes('receptionniste')
+  ) {
+    return 'Logistique';
+  }
+  if (lower.includes('mécanicien') || lower.includes('mecanicien')) {
+    return 'Mécanicien';
+  }
+  if (lower.includes('commercial') || lower.includes('vente') || lower.includes('vendeuse')) {
+    return 'Commercial / Vente';
+  }
+
+  // 4. (Règle par défaut) Coupe au premier caractère spécial (virgule, slash, tiret du bas)
+  const mainPart = trimmed.split(/[,/_]/)[0].trim();
+  if (!mainPart) {
+    return 'Non renseigné';
+  }
+  return mainPart.charAt(0).toUpperCase() + mainPart.slice(1);
+}
+
 export default function AnalyticsCharts({ rsvps }: AnalyticsChartsProps) {
   const total = rsvps.length;
 
@@ -37,25 +90,20 @@ export default function AnalyticsCharts({ rsvps }: AnalyticsChartsProps) {
   const strokeWith = (pctWith / 100) * circumference;
   const strokeWithout = (pctWithout / 100) * circumference;
 
-  // Regroupement insensible à la casse pour le Top 5 Profils
-  const profileMap = new Map<string, { label: string; count: number }>();
-  rsvps.forEach((r) => {
-    const raw = (r.jobTitle || 'Demandeur d\'emploi').trim();
-    if (!raw) return;
-    const key = raw.toLowerCase().replace(/\s+/g, ' ');
-    if (profileMap.has(key)) {
-      profileMap.get(key)!.count += 1;
-    } else {
-      // Capitaliser proprement pour l'affichage
-      const formatted = raw.length > 1 ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw;
-      profileMap.set(key, { label: formatted, count: 1 });
-    }
-  });
+  // Regroupement par grandes familles et comptage via reduce
+  const profileCounts = rsvps.reduce<Record<string, number>>((acc, r) => {
+    const raw = r.jobTitle || '';
+    const family = groupProfile(raw);
+    acc[family] = (acc[family] || 0) + 1;
+    return acc;
+  }, {});
 
-  const topProfiles = Array.from(profileMap.values())
+  const topProfiles = Object.entries(profileCounts)
+    .map(([label, count]) => ({ label, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5);
 
+  const distinctProfilesCount = Object.keys(profileCounts).length;
   const maxProfileCount = topProfiles[0]?.count || 1;
 
   return (
@@ -194,7 +242,7 @@ export default function AnalyticsCharts({ rsvps }: AnalyticsChartsProps) {
               </div>
             </div>
             <span className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 font-mono font-bold text-[10px]">
-              {profileMap.size} profils distincts
+              {distinctProfilesCount} profils distincts
             </span>
           </div>
 
