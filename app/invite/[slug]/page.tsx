@@ -137,7 +137,10 @@ export default function InvitePage({ params }: InvitePageProps) {
         createdAt: new Date().toISOString(),
       };
 
-      await store.saveRSVP(newRSVP);
+      // Déclenchement immédiat de l'écran de succès et des confettis (zéro latence)
+      setConfirmedRSVP(newRSVP);
+      setIsSingleVoletModalOpen(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       try {
         confetti({
@@ -150,9 +153,8 @@ export default function InvitePage({ params }: InvitePageProps) {
         // ignorer
       }
 
-      setConfirmedRSVP(newRSVP);
-      setIsSingleVoletModalOpen(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Sauvegarde locale instantanée et synchronisation Supabase
+      await store.saveRSVP(newRSVP);
     } catch (err) {
       console.error(err);
       setErrorMessage("Une erreur est survenue lors de l'enregistrement.");
@@ -472,6 +474,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                 </div>
               </div>
 
+              {/* Ligne 2 : Numéro PNPE & Contact (Facultatifs) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Numéro PNPE (Facultatif) */}
                 <div>
@@ -487,20 +490,35 @@ export default function InvitePage({ params }: InvitePageProps) {
                   />
                 </div>
 
-                {/* Profil (Obligatoire) */}
+                {/* Contact / Téléphone (Facultatif) */}
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Profil *
+                    CONTACT <span className="text-slate-400 font-normal">(FACULTATIF)</span>
                   </label>
                   <input
-                    type="text"
-                    required
-                    value={profil}
-                    onChange={(e) => setProfil(e.target.value)}
-                    placeholder="Ex: Comptable, Développeur Web, Électricien..."
+                    type="tel"
+                    required={false}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Ex: 077 00 00 00 / 066 00 00 00"
                     className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
                   />
                 </div>
+              </div>
+
+              {/* Ligne 3 : Profil (Pleine largeur) */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Profil *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={profil}
+                  onChange={(e) => setProfil(e.target.value)}
+                  placeholder="Ex: Comptable, Développeur Web, Électricien..."
+                  className="w-full px-3.5 py-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/20 text-slate-900 transition-all font-sans"
+                />
               </div>
 
                   {/* Bouton de confirmation Demandeur */}

@@ -470,6 +470,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                 <tr className="bg-slate-50 border-b border-slate-200/80 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
                   <th className="py-4 px-6">Demandeur d'emploi</th>
                   <th className="py-4 px-6">Profil</th>
+                  <th className="py-4 px-6">Contact</th>
                   <th className="py-4 px-6">Activité Choisie</th>
                   <th className="py-4 px-6 text-center">N° PNPE</th>
                   <th className="py-4 px-6 text-right">Actions</th>
@@ -478,7 +479,7 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
               <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
                 {filteredRSVPs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                    <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
                       Aucun demandeur enregistré pour ce filtre.
                     </td>
                   </tr>
@@ -504,6 +505,17 @@ export default function AdminRSVPsPage({ params }: AdminRSVPsPageProps) {
                           <p className="text-[11px] text-slate-400">
                             Inscrit le {new Date(r.createdAt).toLocaleDateString('fr-FR')}
                           </p>
+                        </td>
+
+                        {/* CONTACT */}
+                        <td className="py-4 px-6 whitespace-nowrap">
+                          {r.phone && r.phone !== 'Non renseigné' ? (
+                            <span className="font-mono font-semibold text-slate-800 text-xs">
+                              {r.phone}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic text-xs">Non renseigné</span>
+                          )}
                         </td>
 
                         {/* ACTIVITÉ CHOISIE */}

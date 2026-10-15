@@ -396,21 +396,19 @@ export const store = {
   },
 
   async saveRSVP(rsvp: RSVPRegistration): Promise<RSVPRegistration> {
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        const { error } = await supabase.from('rsvps').upsert(rsvp);
-        if (error) {
-          console.warn('Erreur insertion Supabase rsvps:', error);
-        }
-      } catch (err) {
-        console.warn('Erreur sauvegarde RSVP Supabase:', err);
-      }
-    }
-
+    // 1. Sauvegarde locale instantanée (0ms de latence pour l'utilisateur)
     if (isClient()) {
       initLocalStorage();
-      const current = await this.getRSVPs();
+      let current: RSVPRegistration[] = [];
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_RSVPS);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) current = parsed;
+        }
+      } catch {
+        // fallback
+      }
       const index = current.findIndex((r) => r.id === rsvp.id);
       if (index >= 0) {
         current[index] = rsvp;
@@ -423,6 +421,19 @@ export const store = {
       const idx = memoryState.rsvps.findIndex((r) => r.id === rsvp.id);
       if (idx >= 0) memoryState.rsvps[idx] = rsvp;
       else memoryState.rsvps.unshift(rsvp);
+    }
+
+    // 2. Synchronisation Supabase directe sans re-téléchargement intégral de la table
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { error } = await supabase.from('rsvps').upsert(rsvp);
+        if (error) {
+          console.warn('Erreur insertion Supabase rsvps:', error);
+        }
+      } catch (err) {
+        console.warn('Erreur sauvegarde RSVP Supabase:', err);
+      }
     }
 
     return rsvp;

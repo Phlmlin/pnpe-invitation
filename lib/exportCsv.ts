@@ -10,7 +10,7 @@ export function exportRSVPsToCSV(rsvps: RSVPRegistration[], invitation?: Invitat
     "Demandeur d'emploi (Nom & Prénom)",
     "Profil / Métier",
     "Numéro PNPE",
-    "Téléphone / WhatsApp",
+    "Contact / Téléphone",
     "Email",
     "Participation Activité 1",
     "Participation Activité 2",
