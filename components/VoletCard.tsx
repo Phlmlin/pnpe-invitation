@@ -11,6 +11,7 @@ interface VoletCardProps {
   onToggle: (id: string) => void;
   disabled?: boolean;
   hideImage?: boolean;
+  hideSelectionUI?: boolean;
 }
 
 export default function VoletCard({
@@ -19,6 +20,7 @@ export default function VoletCard({
   onToggle,
   disabled = false,
   hideImage = false,
+  hideSelectionUI = false,
 }: VoletCardProps) {
   const isBlue = volet.theme === 'blue';
   const [isZoomOpen, setIsZoomOpen] = useState(false);
@@ -31,23 +33,25 @@ export default function VoletCard({
   return (
     <>
       <div
-        onClick={() => !disabled && onToggle(volet.id)}
-        role="checkbox"
-        aria-checked={isSelected}
-        tabIndex={disabled ? -1 : 0}
+        onClick={() => !disabled && !hideSelectionUI && onToggle(volet.id)}
+        role={hideSelectionUI ? undefined : "checkbox"}
+        aria-checked={hideSelectionUI ? undefined : isSelected}
+        tabIndex={disabled || hideSelectionUI ? -1 : 0}
         onKeyDown={(e) => {
-          if (!disabled && (e.key === ' ' || e.key === 'Enter')) {
+          if (!disabled && !hideSelectionUI && (e.key === ' ' || e.key === 'Enter')) {
             e.preventDefault();
             onToggle(volet.id);
           }
         }}
-        className={`relative p-5 sm:p-6 lg:p-7 rounded-3xl border-2 transition-all duration-200 cursor-pointer select-none text-left shadow-sm h-full flex flex-col justify-between ${
+        className={`relative p-5 sm:p-6 lg:p-7 rounded-3xl border-2 transition-all duration-200 select-none text-left shadow-sm h-full flex flex-col justify-between ${
+          hideSelectionUI ? 'cursor-default' : 'cursor-pointer'
+        } ${
           isSelected
             ? isBlue
               ? 'bg-gradient-to-br from-indigo-50/95 via-white to-blue-50/90 border-indigo-600 ring-4 ring-indigo-500/20 shadow-modern-lg scale-[1.008]'
               : 'bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/90 border-emerald-600 ring-4 ring-emerald-500/20 shadow-modern-lg scale-[1.008]'
             : 'bg-white hover:bg-slate-50/90 border-slate-200 hover:border-slate-400'
-        } ${disabled ? 'opacity-85 cursor-default' : 'hover:-translate-y-0.5'}`}
+        } ${disabled ? 'opacity-85 cursor-default' : hideSelectionUI ? '' : 'hover:-translate-y-0.5'}`}
       >
         {/* Contenu principal : Disposition Image + Infos */}
         <div className={`flex flex-col ${!hideImage && volet.imageUrl ? 'md:flex-row gap-6 items-stretch' : 'gap-4'} w-full flex-1 justify-between`}>
@@ -119,22 +123,24 @@ export default function VoletCard({
                 </div>
 
                 {/* Bouton Checkbox Stylé */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-2xl border-2 flex items-center justify-center transition-all ${
-                    isSelected
-                      ? isBlue
-                        ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/40'
-                        : 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/40'
-                      : 'border-slate-300 bg-slate-50 text-slate-400'
-                  }`}
-                  aria-hidden="true"
-                >
-                  {isSelected ? (
-                    <Check className="w-5 h-5 stroke-[3]" />
-                  ) : (
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-                  )}
-                </div>
+                {!hideSelectionUI && (
+                  <div
+                    className={`flex-shrink-0 w-8 h-8 rounded-2xl border-2 flex items-center justify-center transition-all ${
+                      isSelected
+                        ? isBlue
+                          ? 'bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-500/40'
+                          : 'bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-500/40'
+                        : 'border-slate-300 bg-slate-50 text-slate-400'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {isSelected ? (
+                      <Check className="w-5 h-5 stroke-[3]" />
+                    ) : (
+                      <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Titre de l'activité */}
@@ -177,35 +183,37 @@ export default function VoletCard({
         </div>
 
         {/* Pied de carte d'interaction explicite */}
-        <div className="mt-3.5 pt-2.5 border-t border-dashed border-slate-200 flex items-center justify-between text-xs font-bold">
-          {isSelected ? (
+        {!hideSelectionUI && (
+          <div className="mt-3.5 pt-2.5 border-t border-dashed border-slate-200 flex items-center justify-between text-xs font-bold">
+            {isSelected ? (
+              <span
+                className={`inline-flex items-center gap-1.5 ${
+                  isBlue ? 'text-indigo-700' : 'text-emerald-700'
+                }`}
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>Activité cochée pour mon inscription</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800">
+                <PlusCircle className="w-4 h-4 text-slate-400" />
+                <span>Cliquer pour cocher cette activité</span>
+              </span>
+            )}
+
             <span
-              className={`inline-flex items-center gap-1.5 ${
-                isBlue ? 'text-indigo-700' : 'text-emerald-700'
+              className={`text-[11px] uppercase font-mono px-2 py-0.5 rounded ${
+                isSelected
+                  ? isBlue
+                    ? 'bg-indigo-100 text-indigo-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                  : 'bg-slate-100 text-slate-500'
               }`}
             >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Activité cochée pour mon inscription</span>
+              {isSelected ? 'Inscrit' : 'Non coché'}
             </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-800">
-              <PlusCircle className="w-4 h-4 text-slate-400" />
-              <span>Cliquer pour cocher cette activité</span>
-            </span>
-          )}
-
-          <span
-            className={`text-[11px] uppercase font-mono px-2 py-0.5 rounded ${
-              isSelected
-                ? isBlue
-                  ? 'bg-indigo-100 text-indigo-800'
-                  : 'bg-emerald-100 text-emerald-800'
-                : 'bg-slate-100 text-slate-500'
-            }`}
-          >
-            {isSelected ? 'Inscrit' : 'Non coché'}
-          </span>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Modal Zoom Image Activité */}

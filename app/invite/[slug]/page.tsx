@@ -218,6 +218,8 @@ export default function InvitePage({ params }: InvitePageProps) {
       ? invitation.volets.find((v) => v.id !== selectedVolets[0])
       : null;
 
+  const isMultiActivity = invitation ? invitation.volets.length > 1 : false;
+
   return (
     <div className="flex-1 flex flex-col bg-slate-50 relative">
       <OfficialHeader organization={invitation.organization} />
@@ -383,11 +385,13 @@ export default function InvitePage({ params }: InvitePageProps) {
 
           {/* 2. SÉLECTION DES ACTIVITÉS */}
           <div className="bg-white/95 backdrop-blur-md border-2 border-indigo-100 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider">
-                <span>Étape 1 sur 2</span>
+            {isMultiActivity && (
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-xs font-black uppercase tracking-wider">
+                  <span>Étape 1 sur 2</span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Grille en 2 colonnes distinctes : Grandes affiches à gauche | Cartes d'informations à droite */}
             <div className="space-y-8 pt-2">
@@ -400,6 +404,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                         volet={volet}
                         isSelected={selectedVolets.includes(volet.id)}
                         onToggle={handleToggleVolet}
+                        hideSelectionUI={!isMultiActivity}
                       />
                     </div>
                   )}
@@ -411,6 +416,7 @@ export default function InvitePage({ params }: InvitePageProps) {
                       isSelected={selectedVolets.includes(volet.id)}
                       onToggle={handleToggleVolet}
                       hideImage={true}
+                      hideSelectionUI={!isMultiActivity}
                     />
                   </div>
                 </div>
@@ -418,28 +424,32 @@ export default function InvitePage({ params }: InvitePageProps) {
             </div>
 
             {/* Indicateur de sélection */}
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs font-semibold">
-              <span className="text-slate-600">
-                {selectedVolets.length === 0 ? (
-                  <strong className="text-rose-600">Aucune activité sélectionnée</strong>
-                ) : (
-                  <span>
-                    <strong className="text-indigo-900">{selectedVolets.length}</strong> sur {invitation.volets.length} activité(s) sélectionnée(s)
-                  </span>
-                )}
-              </span>
-              <span className="text-slate-500 font-mono font-bold">
-                {selectedVolets.length}/{invitation.volets.length}
-              </span>
-            </div>
+            {isMultiActivity && (
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs font-semibold">
+                <span className="text-slate-600">
+                  {selectedVolets.length === 0 ? (
+                    <strong className="text-rose-600">Aucune activité sélectionnée</strong>
+                  ) : (
+                    <span>
+                      <strong className="text-indigo-900">{selectedVolets.length}</strong> sur {invitation.volets.length} activité(s) sélectionnée(s)
+                    </span>
+                  )}
+                </span>
+                <span className="text-slate-500 font-mono font-bold">
+                  {selectedVolets.length}/{invitation.volets.length}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* 3. FORMULAIRE D'INSCRIPTION DES PARTICIPANTS */}
           <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-3xl p-6 sm:p-8 lg:p-10 shadow-modern space-y-6 text-left">
             <div className="pb-4 border-b border-slate-200/80 space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider">
-                <span>Étape 2 sur 2</span>
-              </div>
+              {isMultiActivity && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider">
+                  <span>Étape 2 sur 2</span>
+                </div>
+              )}
               <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
                 Inscrivez-vous pour participer
               </h2>
